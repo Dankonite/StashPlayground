@@ -1346,3 +1346,14 @@ input[type="range"].blue-slider {
   }
   
 }
+/* Button styling when in edit mode */
+.edit-mode .btn-edit {
+  background-color: #ca463f;
+  color: white;
+}
+
+/* Button styling when in view mode */
+.view-mode .btn-edit {
+  background-color: rgba(255, 255, 255, 0);
+  color: rgb(255, 243, 243);
+}

@@ -985,7 +985,7 @@ const UtilityBar: React.FC<UBarProps> = ({
     </Nav.Item>
     <Nav.Item>
       <Button
-      className="btn-clear"
+      className="btn-edit"
       onClick={() => setEditMode()}
       >
         <FormattedMessage id="actions.edit"/>
@@ -1538,30 +1538,30 @@ const SceneLoader: React.FC<RouteComponentProps<ISceneParams>> = ({
     </>)}
   </div>
   const leftDeets = 
-  <div className="floatingdeets">
-    <div className="studio-row">
-      <Link to={`/studios/${scene.studio?.id}`} className="studio-row d-flex flex-row link w-fc">
-          <img src={scene.studio?.image_path ?? ""} style={{height: "50px"}} className="mb-2"></img>
-      </Link>
-    </div>
-    <div className="d-flex">
-      <h1>{scene.title}</h1>
-    </div>
-    {file?.width && file?.height && (
-      <h6>
-        <FormattedMessage id="resolution" />:{" "}
-        {TextUtils.resolution(file.width, file.height)}
-      </h6>
-      )}
-    <Button
-      className="btn-success mt-4"
-      onClick={() => setPlay(!play)}
-    >
-      <Icon icon={faPlay}/> Watch
-    </Button>
-    <UtilityBar scene={scene} setEditMode={() => setEditMode(!editMode)}/>
-    {markerCar}
+  <div className={`floatingdeets ${editMode ? 'edit-mode' : 'view-mode'}`}>
+  <div className="studio-row">
+    <Link to={`/studios/${scene.studio?.id}`} className="studio-row d-flex flex-row link w-fc">
+      <img src={scene.studio?.image_path ?? ""} style={{height: "50px"}} className="mb-2"></img>
+    </Link>
   </div>
+  <div className="d-flex">
+    <h1>{scene.title}</h1>
+  </div>
+  {file?.width && file?.height && (
+    <h6>
+      <FormattedMessage id="resolution" />:{" "}
+      {TextUtils.resolution(file.width, file.height)}
+    </h6>
+  )}
+  <Button
+    className="btn-success mt-4"
+    onClick={() => setPlay(!play)}
+  >
+    <Icon icon={faPlay}/> Watch
+  </Button>
+  <UtilityBar scene={scene} setEditMode={() => setEditMode(!editMode)}/>
+  {markerCar}
+</div>
 
 
   return (
