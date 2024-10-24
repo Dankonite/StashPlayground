@@ -293,6 +293,17 @@ const ScenePage: React.FC<IProps> = ({
     }
   };
 
+  function setRating(v: number | null) {
+    updateScene({
+      variables: {
+        input: {
+          id: scene.id,
+          rating100: v,
+        },
+      },
+    });
+  }
+
   const onDecrementClick = async () => {
     try {
       await decrementO();
@@ -576,12 +587,23 @@ const ScenePage: React.FC<IProps> = ({
               <ExternalPlayerButton scene={scene} />
             </Nav.Item>
             <Nav.Item className="ml-auto">
+            <RatingSystem
+                value={scene.rating100}
+                onSetRating={setRating}
+                clickToRate
+                withoutContext
+              />
+            </Nav.Item>
+            {/* <Nav.Item className="ml-auto">
               <OCounterButton
                 value={scene.o_counter || 0}
                 onIncrement={onIncrementClick}
                 onDecrement={onDecrementClick}
                 onReset={onResetClick}
               />
+            </Nav.Item> */}
+            <Nav.Item className="ml-auto">
+              <ExternalPlayerButton scene={scene} />
             </Nav.Item>
             <Nav.Item>
               <OrganizedButton
