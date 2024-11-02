@@ -1,4 +1,84 @@
+// Search container styles
+.search-container {
+  position: absolute;
+  left: 50%;
+  transform: translateX(-50%);
+  max-width: 800px;
+  width: 100%;
+  z-index: 1000;
+}
+// Pill-shaped search box
+.search-box-input {
+  width: 500% !important;
+  border-radius: 50px !important;
+  padding: 0.5rem 1rem;
+  height: 40px;
+  border: 2px solid white !important;
+  background-color: #333 !important;
+  color: white !important;
+  text-align: center !important; // Center the text
+  
+  &::placeholder {
+    color: white;
+    text-align: center; // Center the placeholder text too
+  }
 
+  &:focus {
+    outline: none !important;
+    border-color: white !important;
+    box-shadow: none !important;
+  }
+
+  // Optional: adjust cursor position to center
+  &:focus::placeholder {
+    opacity: 0; // Hide placeholder when typing
+  }
+}
+
+// Clear button styling
+.search-clear {
+  visibility: hidden;
+  border-radius: 50%;
+  height: 30px;
+  width: 30px;
+  padding: 0;
+  margin-left: -50px;
+  border-color: transparent;
+  background-color: transparent;
+  position: relative;
+  right: 10px;
+  z-index: 1001; // Ensure it's above the input
+}
+
+// Keep your existing search active and results styles
+.search-active {
+  & ~ .main.container-fluid {
+    filter: blur(19px);
+    transition: filter 0.5s ease;
+  }
+}
+
+.search-results {
+  position: absolute;
+  width: 80vw;
+  background-color: rgba(74, 73, 73, 0.98);
+  top: 3rem;
+  left: 50%;
+  transform: translateX(-50%);
+  border-radius: 10px;
+  box-shadow: 0 8px 16px rgba(0, 0, 0, 0.83);
+  padding: 20px;
+  max-height: 70vh;
+  overflow-y: auto;
+  z-index: 1000;
+  display: none;
+  
+  &.Searching {
+    display: block;
+  }
+}
+
+/* Rest of your existing styles... */
 
 /// New Navbar Edits
 /* Ensure navbar is a flex container and aligns items properly */
