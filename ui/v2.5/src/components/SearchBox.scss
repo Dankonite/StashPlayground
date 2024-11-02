@@ -1,0 +1,331 @@
+
+
+/// New Navbar Edits
+/* Ensure navbar is a flex container and aligns items properly */
+.top-nav {
+  display: flex;
+  justify-content: space-between; /* Space out items */
+  align-items: center; /* Vertically center items */
+  // position: relative; /* For positioning the search-container */
+}
+
+/* Search container styling */
+.search-container {
+  position: absolute;
+  left: 50%;
+  transform: translateX(-50%);
+  max-width: 600px; /* Adjust to desired max-width */
+  width: 100%;
+}
+
+/* Ensure search box takes full width within its container */
+.searchbox {
+  display: flex;
+  justify-content: center;
+  width: 100%;
+}
+
+.searchbox-input {
+  width: 100%;
+}
+.search-box-input {
+  width: 300%; /* Adjust this value to your desired length */
+}
+
+.search-container {
+  display: flex;
+  align-items: center; /* Center items vertically within the container */
+}
+
+.search-box-input {
+  border-radius: 50px; /* Makes the search box round */
+  padding: 10px 20px; /* Adjust padding to make the search box longer */
+  height: 40px; /* Adjust height for a pill shape */
+  border: none; /* Remove the default border */
+}
+
+.search-clear {
+  visibility: hidden; // Clear Search Button is hidden
+  border-radius: 50%; /* Makes the clear button round */
+  height: 30px; /* Adjust size as needed */
+  width: 30px; /* Adjust size as needed */
+  padding: 0; /* Remove default padding */
+  margin-left: -50px; /* Adjust margin to align with search box */
+  border-color: transparent;
+  background-color: transparent;
+}
+.search-box-input {
+  width: 300%; /* Adjusted length */
+  border-radius: 50px; /* Rounded corners */
+  padding: 0.5rem 1rem; /* Padding for pill shape */
+  border: 2px solid white; /* White border */
+  background-color: #333; /* Background color */
+  color: white; /* Text color */
+}
+
+.search-box-input::placeholder {
+  color: white; /* Placeholder text color */
+}
+
+.search-box-input:focus {
+  outline: none; /* Remove default blue outline */
+  border-color: white; /* Maintain white border when focused */
+  box-shadow: none; /* Remove any additional box shadow */
+}
+
+// .search-results {
+//   border-radius: 0 0 50px 50px; /* Round bottom corners of the results */
+// }
+
+.search-results {
+  display: none; /* Hide by default */
+  /* Other styles... */
+}
+
+.search-results.Searching {
+  display: block; /* Show when searching */  
+}
+
+.search-container {
+  flex: 1;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 0; /* Ensure no padding is affecting the centering */
+  margin: 0; /* Reset margins to avoid any offset */
+}
+
+.search-box {
+  width: 65%;
+  max-width: 800px;
+  margin: 0 auto; /* Explicitly center the search box */
+}
+
+.navbar-buttons {
+  display: flex;
+  align-items: center;
+  margin-left: auto; /* Pushes this container to the right */
+}
+
+.navbar-brand,
+.navbar-toggle {
+  margin: 0; /* Ensure no margins are affecting centering */
+  padding: 0; /* Ensure no padding is affecting centering */
+}
+
+.search-results {
+  @media (max-width: 576px) {
+    width: calc(100vw - 2rem);
+    left: 1rem;
+    right: 1rem;
+  }
+  width: 80vw;
+  background-color: #4a494943; // Change to white for a clean look
+  position: absolute;
+  top: 3rem;
+  left: 50%;
+  transform: translateX(-50%);
+  border-radius: 10px;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  padding: 20px;
+  max-height: 70vh;
+  overflow-y: scroll;
+}
+
+.category h5 {
+  margin-bottom: 0;
+}
+.category-link {
+  display: block;
+  font-weight: bold;
+  color: #007bff; /* Adjust as needed */
+  text-decoration: none;
+  padding: 8px 0;
+}
+
+.category-link:hover {
+  text-decoration: underline;
+}
+.category-grid {
+  display: flex;
+  overflow-x: auto;
+  gap: 10px;
+  padding-bottom: 10px;
+}
+.category-grid::-webkit-scrollbar {
+  height: 8px;
+}
+
+.category-grid::-webkit-scrollbar-thumb {
+  background-color: #888;
+  border-radius: 4px;
+}
+
+.category-grid::-webkit-scrollbar-track {
+  background-color: #f1f1f1;
+}
+
+/* Fix to ensure cards within category-grid are scrollable horizontally */
+.category-grid > * {
+  flex: 0 0 auto;
+  width: 200px; /* Fixed width for all cards */
+  height: 300px; /* Fixed height for all cards */
+}
+
+/* Specific styling for performers and galleries categories */
+.performers-category .category-grid > * {
+  width: 150px; /* Adjust size for performer cards */
+  height: 375px; /* Adjust size for performer cards */
+}
+
+.galleries-category .category-grid > * {
+  width: 150px; /* Adjust size for gallery cards */
+  height: 375px; /* Adjust size for gallery cards */
+}
+
+/* General styles for the search results grid */
+.search-results-grid {
+  display: grid;
+  grid-template-areas:
+    "performers scenes"
+    "galleries movies"
+    "tags studios"
+    "markers images";
+  gap: 20px;
+  grid-template-columns: 1fr 1fr;
+  grid-template-rows: auto auto auto;
+  width: 100%;
+  overflow: hidden;
+}
+
+.category {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  overflow-x: auto;
+}
+
+.category-grid::-webkit-scrollbar {
+  height: 8px;
+}
+
+.category-grid::-webkit-scrollbar-thumb {
+  visibility: hidden;
+  background-color: transparent;
+  border-radius: 4px;
+}
+
+.category-grid::-webkit-scrollbar-track {
+  visibility: hidden;
+  background-color: transparent;
+}
+
+/* Additional styling for individual categories */
+.performers-category {
+  grid-area: performers;
+}
+
+.galleries-category {
+  grid-area: galleries;
+}
+
+.movies-category {
+  grid-area: movies;
+}
+
+
+.scenes-category {
+  grid-area: scenes;
+  .scene-card .card-section {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    height: min-content;
+}
+.card-popovers.btn-group{
+  position: relative;
+}
+}
+
+.studios-category {
+  grid-area: studios;
+  .studio-card-image {
+    max-height: 150px;
+    object-fit: contain;
+    vertical-align: middle;
+    width: 175px;
+}
+}
+
+.tags-category {
+  grid-area: tags;
+  justify-self: center;
+  width: 100%;
+  display: flex;
+  justify-content: center;
+}
+
+.markers-category {
+  grid-area: tags;
+  justify-self: center;
+  width: 100%;
+  display: flex;
+  justify-content: center;
+}
+.images-category {
+  grid-area: tags;
+  justify-self: center;
+  width: 100%;
+  display: flex;
+  justify-content: center;
+}
+
+//
+.ssbutton, .nmbutton {
+  pointer-events: all;
+}
+.sticky.detail-header {
+  display: block;
+  min-height: 50px;
+  padding: unset;
+  position: fixed;
+  top: 3rem;
+  z-index: 10;
+
+  @media (max-width: 576px) {
+    // display: none;
+  }
+
+  .group-name,
+  .performer-name,
+  .studio-name,
+  .tag-name {
+    font-weight: 800;
+  }
+
+  .sticky.detail-header-group {
+    padding: 1rem 2.5rem;
+
+    a.group-name,
+    a.performer-name,
+    a.studio-name,
+    a.tag-name {
+      color: #f5f8fa;
+      cursor: pointer;
+      font-weight: 800;
+    }
+
+    a,
+    span {
+      color: #d7d9db;
+      font-weight: 600;
+      padding-right: 0.5rem;
+    }
+
+    .detail-divider {
+      font-size: 1rem;
+      font-weight: 400;
+      opacity: 0.6;
+    }
+  }
+}

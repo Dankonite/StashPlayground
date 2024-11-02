@@ -19,6 +19,7 @@ import { useHistory } from "react-router-dom";
 import Gallery from "react-photo-gallery";
 import { Link } from "react-router-dom";
 import { useIntl } from "react-intl";
+import './SearchBox.scss'; 
 interface SBProps {}
 const categories = [
     { id: "performers", label: "Performers", route: "/performers" },
@@ -36,6 +37,7 @@ export const SearchBox: React.FC<SBProps> = ({
     const [queryRef, setQueryFocus] = useFocus();
     const [queryClearShowing, setQueryClearShowing] = useState(false);
     const [showResults, setShowResults] = useState(false);
+    const [isSearchActive, setIsSearchActive] = useState(false);
     const history = useHistory();
     type SearchResult = { ShortName: string; TypeData: GQL.SlimSceneDataFragment | GQL.PerformerDataFragment | GQL.TagDataFragment | GQL.StudioDataFragment |GQL.SlimGalleryDataFragment | GQL.GroupDataFragment };
     var searchResults:SearchResult[] = []
@@ -49,11 +51,22 @@ export const SearchBox: React.FC<SBProps> = ({
             setSearch("");
         })
         Mousetrap.bind('escape', (e) => {
+            setIsSearchActive(false);
             (document.getElementById("SearchBox") as HTMLInputElement).blur();
             (document.getElementById("SearchBox") as HTMLInputElement).value = "";
             setSearch("");
         })
     })
+    useEffect(() => {
+        const mainContainer = document.querySelector('.main-container');
+        if (mainContainer) {
+            if (isSearchActive && searchTerm !== "") {
+                mainContainer.classList.add('search-active');
+            } else {
+                mainContainer.classList.remove('search-active');
+            }
+        }
+    }, [isSearchActive, searchTerm]);
     useEffect(() => {
         if (!searchTerm) {
           if (queryRef.current) queryRef.current.value = "";
@@ -62,19 +75,40 @@ export const SearchBox: React.FC<SBProps> = ({
       }, [searchTerm, queryRef]);
 
     function onChangeQuery(event: React.FormEvent<HTMLInputElement>) {
-        setSearch(event.currentTarget.value)
-        searchResults = []
+        const value = event.currentTarget.value;
+        setSearch(value);
+        setIsSearchActive(value !== "");
+        searchResults = [];
+    }
+
+    function onClearQuery() {
+        if (queryRef.current) queryRef.current.value = "";
+        setSearch("");
+        setIsSearchActive(false);
+        setQueryFocus();
+        setQueryClearShowing(false);
+        searchResults = [];
     }
     function onSearchBoxClick() {
         setShowResults(true); // Show results when search box is clicked
     }
-    function onClearQuery() {
-        if (queryRef.current) queryRef.current.value = "";
-        setSearch("");
-        setQueryFocus();
-        setQueryClearShowing(false);
-        searchResults = []
-    }  
+
+    useEffect(() => {
+        const handleClickOutside = (event: MouseEvent) => {
+            const searchContainer = document.querySelector('.search-container');
+            if (searchContainer && !searchContainer.contains(event.target as Node)) {
+                setIsSearchActive(false);
+                if (queryRef.current) queryRef.current.value = "";
+                setSearch("");
+            }
+        };
+
+        document.addEventListener('mousedown', handleClickOutside);
+        return () => {
+            document.removeEventListener('mousedown', handleClickOutside);
+        };
+    }, []);
+
     function getSceneResults() {
         const {data, loading} = GQL.useFindScenesQuery({
             variables: {
@@ -214,6 +248,7 @@ export const SearchBox: React.FC<SBProps> = ({
         }
     
         return (
+            
                 <div className="search-results-grid">
                     {performers.length > 0 ? (
                         <div className="performers-category category">
