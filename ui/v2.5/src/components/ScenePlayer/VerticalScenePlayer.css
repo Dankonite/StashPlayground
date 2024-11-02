@@ -1,0 +1,239 @@
+.VideoPlayer-container {
+  width: 100%;
+  margin: 0 auto;
+  position: relative;
+  aspect-ratio: 9/16;
+}
+
+.VideoPlayer-card {
+  width: 100%;
+  height: 100%;
+  border-radius: 16px;
+  overflow: hidden;
+  background: #000;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+  position: relative;
+}
+
+.VideoPlayer-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.2);
+}
+
+.VideoPlayer-card.is-fullscreen {
+  border-radius: 0;
+  transform: none;
+  box-shadow: none;
+}
+
+.video-wrapper {
+  width: 100%;
+  height: 100%;
+  position: relative;
+}
+
+/* Vertical Progress bar styles - Enhanced size and visibility */
+.shorts-progress-container {
+  position: absolute;
+  top: 50%;
+  left: 20px;
+  transform: translateY(-50%);
+  height: 80%; /* Much taller progress bar */
+  width: 6px; /* Slightly thicker base width */
+  background-color: rgba(255, 255, 255, 0.3); /* More visible background */
+  cursor: pointer;
+  z-index: 3;
+  padding: 0 12px;
+  margin: 0 -12px;
+  border-radius: 3px;
+}
+
+.shorts-progress-bar {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  width: 100%;
+  background-color: #ff0000;
+  transition: height 0.1s linear;
+  border-radius: 3px;
+  /* Add subtle glow effect */
+  box-shadow: 0 0 8px rgba(255, 0, 0, 0.3);
+}
+
+/* Hover effects */
+.shorts-progress-container:hover {
+  width: 10px; /* Thicker on hover */
+  background-color: rgba(255, 255, 255, 0.4); /* More visible on hover */
+}
+
+.shorts-progress-container:hover .shorts-progress-bar {
+  background-color: #ff1a1a;
+  box-shadow: 0 0 12px rgba(255, 0, 0, 0.4);
+}
+
+.shorts-progress-container:hover .shorts-progress-bar::after {
+  content: '';
+  position: absolute;
+  top: -6px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 16px; /* Larger handle */
+  height: 16px; /* Larger handle */
+  background-color: #ff0000;
+  border-radius: 50%;
+  border: 2px solid white;
+  box-shadow: 0 0 8px rgba(0, 0, 0, 0.4);
+}
+
+/* VideoJS custom styles */
+.video-js.vjs-short-form {
+  width: 100%;
+  height: 100%;
+  background-color: #000;
+}
+
+.video-js.vjs-short-form .vjs-tech {
+  object-fit: cover;
+}
+
+.video-js.vjs-short-form .vjs-big-play-button {
+  border: none;
+  background-color: rgba(255, 255, 255, 0.2);
+  border-radius: 50%;
+  width: 60px;
+  height: 60px;
+  line-height: 60px;
+  transform: translate(-50%, -50%);
+}
+
+.video-js.vjs-short-form:hover .vjs-big-play-button {
+  background-color: rgba(255, 255, 255, 0.3);
+}
+
+/* Control bar styling */
+.video-js.vjs-short-form .vjs-control-bar {
+  background: linear-gradient(to top, rgba(0, 0, 0, 0.7), transparent);
+  padding-left: 48px; /* Increased padding to avoid overlap */
+  z-index: 2;
+}
+
+/* Hide default progress bar */
+.video-js.vjs-short-form .vjs-progress-control {
+  display: none;
+}
+
+/* Control bar visibility */
+.VideoPlayer-card .vjs-control-bar {
+  opacity: 0;
+  transition: opacity 0.2s ease;
+}
+
+.VideoPlayer-card:hover .vjs-control-bar {
+  opacity: 1;
+}
+
+/* Always show progress bar */
+.shorts-progress-container {
+  opacity: 1 !important;
+  visibility: visible !important;
+}
+
+/* Make video fill container while maintaining aspect ratio */
+.VideoPlayer-container.portrait .video-wrapper {
+  padding-top: 177.78%;
+}
+
+.VideoPlayer-container.portrait .video-js {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+}
+
+/* Custom loading spinner */
+.video-js .vjs-loading-spinner {
+  border: 3px solid rgba(255, 255, 255, 0.2);
+  border-top-color: #fff;
+  border-radius: 50%;
+  width: 40px;
+  height: 40px;
+  animation: vjs-spinner-spin 1s infinite linear;
+}
+
+@keyframes vjs-spinner-spin {
+  0% {
+    transform: rotate(0deg);
+  }
+  100% {
+    transform: rotate(360deg);
+  }
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+  .shorts-progress-container {
+    width: 4px;
+    left: 16px;
+  }
+  
+  .shorts-progress-container:hover {
+    width: 8px;
+  }
+}
+/* Screenshot button styles */
+.screenshot-button {
+  position: absolute;
+  top: 20px;
+  right: 20px;
+  width: 40px;
+  height: 40px;
+  background-color: rgba(0, 0, 0, 0.6);
+  border-radius: 50%;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 3;
+  transition: all 0.2s ease;
+  opacity: 0;
+}
+
+.VideoPlayer-card:hover .screenshot-button {
+  opacity: 1;
+}
+
+.screenshot-button:hover {
+  background-color: rgba(0, 0, 0, 0.8);
+  transform: scale(1.1);
+}
+
+.screenshot-button svg {
+  color: white;
+  width: 24px;
+  height: 24px;
+}
+
+/* Add flash animation */
+@keyframes screenshot-flash {
+  0% {
+    background-color: rgba(255, 255, 255, 0);
+  }
+  50% {
+    background-color: rgba(255, 255, 255, 0.3);
+  }
+  100% {
+    background-color: rgba(255, 255, 255, 0);
+  }
+}
+
+.screenshot-flash {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  pointer-events: none;
+  animation: screenshot-flash 0.3s ease-out;
+}
