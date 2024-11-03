@@ -105,8 +105,14 @@ const ProgressBar: React.FC<{
 interface IVerticalScenePlayerProps {
   scene: GQL.SceneDataFragment;
   play: boolean;
+  hideScrubberOverride: boolean;
   autoplay?: boolean;
-  onComplete?: () => void;
+  permitLoop?: boolean;
+  initialTimestamp: number;
+  sendSetTimestamp: (setTimestamp: (value: number) => void) => void;
+  onComplete: () => void;
+  onNext: () => void;
+  onPrevious: () => void;
   maxWidth?: number;
   maxHeight?: number;
 }
@@ -114,8 +120,13 @@ interface IVerticalScenePlayerProps {
 export const VerticalScenePlayer: React.FC<IVerticalScenePlayerProps> = ({
   scene,
   play,
-  autoplay = false,
+  autoplay,
+  permitLoop = true,
+  initialTimestamp: _initialTimestamp,
+  sendSetTimestamp,
   onComplete,
+  onNext,
+  onPrevious,
   maxWidth = 400,
   maxHeight = 712,
 }) => {

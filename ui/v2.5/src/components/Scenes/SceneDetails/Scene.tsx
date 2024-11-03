@@ -97,6 +97,7 @@ import cx from "classnames";
 import { sortPerformers } from "src/core/performers";
 import { HoverPopover } from "src/components/Shared/HoverPopover";
 import { SceneMarkerForm } from "./SceneMarkerForm";
+import VerticalScenePlayer from "src/components/ScenePlayer/VerticalScenePlayer";
 
 interface Oprops {
   scene: GQL.SceneDataFragment
