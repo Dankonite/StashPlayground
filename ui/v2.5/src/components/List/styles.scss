@@ -157,8 +157,50 @@ input[type="range"].zoom-slider {
     max-height: min(550px, calc(100vh - 12rem));
     padding-left: 0;
     padding-right: 0;
+    overflow: hidden; // Add this to prevent content from spilling out
+    display: flex; // Add this to enable flex layout
+    flex-direction: column; // Stack children vertically
   }
 
+  .dialog-content {
+    display: flex;
+    flex-direction: column;
+    height: 100%; // Take full height of modal body
+    overflow: hidden; // Contain overflow
+  }
+
+  .criterion-list {
+    flex: 1; // Allow list to grow and fill space
+    overflow-y: auto; // Enable vertical scrolling
+    overflow-x: hidden; // Prevent horizontal overflow
+    margin-bottom: 0; // Remove bottom margin to prevent scrolling issues
+
+    .card {
+      margin: 0;
+      border-radius: 0;
+      border-left: 0;
+      border-right: 0;
+      
+      &:first-child {
+        border-top: 0;
+      }
+    }
+  }
+  .filter-tags {
+    flex-shrink: 0; // Prevent filter tags from shrinking
+    border-top: 1px solid rgb(16 22 26 / 40%);
+    padding: 1rem;
+    background: inherit; // Match modal background
+    position: relative; // Ensure it stays above scrolling content
+    z-index: 1;
+  }
+
+  // Ensure pinned criterion divider doesn't cause overflow
+  .pinned-criterion-divider {
+    padding-bottom: 1rem; // Reduce padding to prevent overflow
+    margin-bottom: 1rem; // Add margin instead of padding
+    border-bottom: 1px solid rgb(16 22 26 / 40%);
+  }
   .filter-tags {
     border-top: 1px solid rgb(16 22 26 / 40%);
     padding: 1rem 1rem 0 1rem;
