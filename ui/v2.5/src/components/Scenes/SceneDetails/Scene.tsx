@@ -1632,7 +1632,7 @@ const SceneLoader: React.FC<RouteComponentProps<ISceneParams>> = ({
             <ScenePreview
                   image={scene.paths.screenshot ?? ""}
                   video={scene.paths.preview ?? ""}
-                  isPortrait={false}
+                  isPortrait={scene.tags.some(tag => tag.name === "Vertical Video")}
                   soundActive={false}
                   />
             </div>
