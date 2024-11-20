@@ -1371,3 +1371,34 @@ input[type="range"].blue-slider {
   visibility: visible;
   height: auto;
 }
+/* MarkerPreview Download*/
+.marker-preview-container {
+  position: relative;
+  width: fit-content;
+}
+
+.marker-preview-container .download-button {
+  position: absolute;
+  right: 5px;
+  top: 5px;
+  background: rgba(0,0,0,0.5);
+  border: none;
+  border-radius: 50%;
+  width: 30px;
+  height: 30px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  color: white;
+  opacity: 0;
+  transition: opacity 0.2s ease-in-out, background 0.2s ease-in-out;
+}
+
+.marker-preview-container:hover .download-button {
+  opacity: 1;
+}
+
+.marker-preview-container .download-button:hover {
+  background: rgba(0,0,0,0.7);
+}
