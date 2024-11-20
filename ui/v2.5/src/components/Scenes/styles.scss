@@ -1357,3 +1357,17 @@ input[type="range"].blue-slider {
   background-color: rgba(255, 255, 255, 0);
   color: rgb(255, 243, 243);
 }
+/* Dadeets Group Chevron animation*/
+.dadeetschevron-fade {
+  opacity: 0;
+  visibility: hidden;
+  transition: opacity 0.3s ease-in-out, visibility 0.3s ease-in-out;
+  height: 0;
+  overflow: hidden;
+}
+
+.dadeetschevron-fade.show {
+  opacity: 1;
+  visibility: visible;
+  height: auto;
+}

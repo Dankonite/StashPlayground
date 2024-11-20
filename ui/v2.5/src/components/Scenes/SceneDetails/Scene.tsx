@@ -22,6 +22,8 @@ import {
   queryFindScenes,
   queryFindScenesByID,
 } from "src/core/StashService";
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import { faChevronDown, faChevronUp } from '@fortawesome/free-solid-svg-icons';
 
 import { CriterionModifier } from "src/core/generated-graphql";
 import { useFindImagesQuery } from "src/core/generated-graphql";
@@ -98,6 +100,7 @@ import { sortPerformers } from "src/core/performers";
 import { HoverPopover } from "src/components/Shared/HoverPopover";
 import { SceneMarkerForm } from "./SceneMarkerForm";
 import VerticalScenePlayer from "src/components/ScenePlayer/VerticalScenePlayer";
+import { GroupCard } from "src/components/Groups/GroupCard";
 
 interface Oprops {
   scene: GQL.SceneDataFragment
@@ -1298,6 +1301,8 @@ const SceneLoader: React.FC<RouteComponentProps<ISceneParams>> = ({
     [queueScenes, id]
   );
 
+  const [isChevronDeetExpanded, setIsChevronDeetExpanded] = useState(false);
+
   function getSetTimestamp(fn: (value: number) => void) {
     _setTimestamp.current = fn;
   }
@@ -1363,6 +1368,7 @@ const SceneLoader: React.FC<RouteComponentProps<ISceneParams>> = ({
   const queueHasMoreScenes = useMemo(() => {
     return queueStart + queueScenes.length - 1 < queueTotal;
   }, [queueStart, queueScenes, queueTotal]);
+
 
   async function onQueueMoreScenes() {
     if (!sceneQueue.query || !queueHasMoreScenes) {
@@ -1678,15 +1684,45 @@ const SceneLoader: React.FC<RouteComponentProps<ISceneParams>> = ({
                   {markerModal ? <NewMarkerDialog onCancel={() => setMarkerModal(false)} scene={scene}/> : ""}
                 </div>
                 <div className="dadeets">
-                  {scene.date ? <span className="dadate mt-3">{scene.date!}</span> : ""}
-                  {scene.details ? <span className="dadetails mt-5">{scene.details!}</span>: ""}
-                    <PerformerPill performers={scene.performers}/>
-                  {scene.tags.length != 0 ? <div className="daTags mt-5">
-                    {scene.tags.map((tag) => <a href={`/tags/${tag.id}`} className="daTagsTag">
-                      {tag.name}
-                    </a>)}
-                  </div>: ""}
-                </div>
+                {scene.date ? <span className="dadate mt-3">{scene.date!}</span> : ""}
+                {scene.details ? <span className="dadetails mt-5">{scene.details!}</span> : ""}
+                <PerformerPill performers={scene.performers}/>
+                
+                {(scene.tags.length != 0 || (scene.groups && scene.groups.length > 0)) && (
+                  <div className="mt-5">
+                    <div 
+                      className="d-flex justify-content-center cursor-pointer"
+                      style={{
+                        transition: 'transform 0.2s',
+                      }}
+                      onMouseEnter={(e) => e.currentTarget.style.transform = 'translateY(-3px)'}
+                      onMouseLeave={(e) => e.currentTarget.style.transform = 'translateY(0)'}
+                      onClick={() => setIsChevronDeetExpanded(!isChevronDeetExpanded)}
+                    >
+                      <FontAwesomeIcon 
+                        icon={isChevronDeetExpanded ? faChevronUp : faChevronDown} 
+                        size="lg"
+                      />
+                    </div>
+                    
+                    <div className={`mt-3 dadeetschevron-fade ${isChevronDeetExpanded ? 'show' : ''}`}>
+                      {scene.tags.length != 0 && (
+                        <div className="daTags">
+                          {scene.tags.map((tag) => <a href={`/tags/${tag.id}`} className="daTagsTag">
+                            {tag.name}
+                          </a>)}
+                        </div>
+                      )}
+                      
+                      {scene.groups && scene.groups.length > 0 && (
+                        <div className="mt-3">
+                          <SceneGroupPanel scene={scene} />
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                )}
+              </div>
                 <div className="dabars">
                   <NextBars scene={scene}/>
                 </div>
