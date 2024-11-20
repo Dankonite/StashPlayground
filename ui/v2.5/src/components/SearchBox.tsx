@@ -10,12 +10,15 @@ import { TagCard } from "./Tags/TagCard";
 import { SceneCard } from "./Scenes/SceneCard";
 import { StudioCard } from "./Studios/StudioCard";
 import { GalleryCard } from "./Galleries/GalleryCard";
+import { WallItem } from "./Wall/WallItem";
 import { GroupCard } from "./Groups/GroupCard";
+import { ImageCard} from "./Images/ImageCard";
 import Mousetrap from "mousetrap";
 import { useHistory } from "react-router-dom";
 import { Link } from "react-router-dom";
 import { useIntl } from "react-intl";
 import './SearchBox.scss';
+import TextUtils from "src/utils/text";
 
 interface SBProps {}
 
@@ -42,7 +45,7 @@ export const SearchBox: React.FC<SBProps> = () => {
         ShortName: string; 
         TypeData: GQL.SlimSceneDataFragment | GQL.PerformerDataFragment | 
                  GQL.TagDataFragment | GQL.StudioDataFragment |
-                 GQL.SlimGalleryDataFragment | GQL.GroupDataFragment 
+                 GQL.SlimGalleryDataFragment | GQL.GroupDataFragment | GQL.SceneMarkerDataFragment | GQL.SlimImageDataFragment
     };
 
     // Keyboard shortcuts
@@ -231,6 +234,37 @@ export const SearchBox: React.FC<SBProps> = () => {
             }
         }
     });
+
+    const { data: markerData } = GQL.useFindSceneMarkersQuery({
+        variables: {
+          filter: {
+            per_page: searchTerm !== "" ? 40 : 0,
+            q: searchTerm
+          },
+          scene_marker_filter: {
+            tags: {
+              modifier: GQL.CriterionModifier.IsNull,
+              value: [],
+              excludes: [] // Include this to search all markers
+            }
+          }
+        }
+      });
+
+    const { data: imageData } = GQL.useFindImagesQuery({
+        variables: {
+            filter: {
+                per_page: searchTerm !== "" ? 40 : 0,
+                q: searchTerm
+            },
+            image_filter: {
+                title: {
+                    modifier: GQL.CriterionModifier.NotNull,
+                    value: ""
+                }
+            }
+        }
+    });
     // Process search results
     useEffect(() => {
         if (!searchTerm) {
@@ -282,6 +316,21 @@ export const SearchBox: React.FC<SBProps> = () => {
             })));
         }
 
+
+        if (markerData?.findSceneMarkers.scene_markers) {
+            results.push(...markerData.findSceneMarkers.scene_markers.map(marker => ({
+            ShortName: marker.title || marker.primary_tag.name, // Use the marker title or fallback to primary tag name
+            TypeData: marker
+            })));
+        }
+
+        if (imageData?.findImages.images) {
+            results.push(...imageData.findImages.images.map(image => ({
+                ShortName: image.title!,
+                TypeData: image
+            })));
+        }
+
         const fuse = new Fuse(results, {
             keys: ['ShortName'],
             shouldSort: true,
@@ -289,7 +338,7 @@ export const SearchBox: React.FC<SBProps> = () => {
         });
 
         setSearchResults(fuse.search(searchTerm).map(({ item }) => item));
-    }, [searchTerm, sceneData, perfData, tagData, studioData, galleryData, movieData]);
+    }, [searchTerm, sceneData, perfData, tagData, studioData, galleryData, movieData, imageData, markerData]);
 
     function goToFirstResult() {
         if (searchResults.length === 0) return;
@@ -302,6 +351,8 @@ export const SearchBox: React.FC<SBProps> = () => {
             firstResult.TypeData.__typename === "Studio" ? "studios" :
             firstResult.TypeData.__typename === "Gallery" ? "galleries" :
             firstResult.TypeData.__typename === "Group" ? "movies" :
+            firstResult.TypeData.__typename === "SceneMarker" ? "markers" :
+            firstResult.TypeData.__typename === "Image" ? "images" :
             ""
         }/${firstResult.TypeData.id}`);
     }
@@ -313,6 +364,8 @@ export const SearchBox: React.FC<SBProps> = () => {
     const studios = searchResults.filter(sResult => sResult.TypeData.__typename === "Studio");
     const galleries = searchResults.filter(sResult => sResult.TypeData.__typename === "Gallery");
     const movies = searchResults.filter(sResult => sResult.TypeData.__typename === "Group");
+    const markers = searchResults.filter(sResult => sResult.TypeData.__typename === "SceneMarker");
+    const images = searchResults.filter(sResult => sResult.TypeData.__typename === "Image");
 
     useEffect(() => {
         // Add or remove the search-active class to the nav element
@@ -455,6 +508,73 @@ export const SearchBox: React.FC<SBProps> = () => {
                                         <GroupCard 
                                             key={sResult.TypeData.id} 
                                             group={sResult.TypeData as GQL.GroupDataFragment} 
+                                        />
+                                    ))
+                                ) : (
+                                    <div className="no-results">No results found...</div>
+                                )}
+                            </div>
+                        </div>
+                        {/* Markers Section */}
+                        <div className="markers-category category">
+                            <Link to="/markers" className="category-link">
+                                <h5>Markers</h5>
+                            </Link>
+                            <div className="category-grid">
+                                {markers.length > 0 ? (
+                                    markers.slice(0, 9).map(sResult => {
+                                        const marker = sResult.TypeData as GQL.SceneMarkerDataFragment;
+                                        return (
+                                            <div key={marker.id} className="marker-preview-container">
+                                                <Link
+                                                    to={`/scenes/${marker.scene.id}?t=${marker.seconds}`}
+                                                    style={{
+                                                        display: "flex",
+                                                        flexDirection: "column",
+                                                        width: "fit-content",
+                                                        padding: "0 .75rem",
+                                                        paddingBottom: "0.25rem",
+                                                        textDecoration: "none",
+                                                        color: "#fff"
+                                                    }}
+                                                >
+                                                    <img
+                                                        style={{
+                                                            height: "100px",
+                                                            aspectRatio: "auto",
+                                                            borderRadius: ".75rem",
+                                                        }}
+                                                        src={marker.preview}
+                                                        alt=""
+                                                    />
+                                                    <span style={{ textAlign: "center" }}>
+                                                        {marker.title || marker.primary_tag.name}
+                                                    </span>
+                                                    <span style={{ textAlign: "center" }}>
+                                                        {TextUtils.secondsToTimestamp(marker.seconds)}
+                                                    </span>
+                                                </Link>
+                                            </div>
+                                        );
+                                    })
+                                ) : (
+                                    <div className="no-results">No results found...</div>
+                                )}
+                            </div>
+                        </div>
+                        {/* Images Section */}
+                        <div className="images-category category">
+                            <Link to="/images" className="category-link">
+                                <h5>Images</h5>
+                            </Link>
+                            <div className="category-grid">
+                                {images.length > 0 ? (
+                                    images.slice(0, 9).map(sResult => (
+                                        <ImageCard 
+                                            key={sResult.TypeData.id} 
+                                            image={sResult.TypeData as GQL.SlimImageDataFragment}
+                                            zoomIndex={2} // Adjust this value based on your preferred zoom level (0-3)
+                                            containerWidth={240} // Adjust based on your grid layout
                                         />
                                     ))
                                 ) : (
