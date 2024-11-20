@@ -51,7 +51,7 @@
 }
 
 // Keep your existing search active and results styles
-.search-active {
+.search-active.dropdown-active {
   & ~ .main.container-fluid {
     filter: blur(19px);
     transition: filter 0.5s ease;
@@ -444,5 +444,39 @@
       font-weight: 400;
       opacity: 0.6;
     }
+  }
+}
+
+
+.search-mode-toggle {
+  margin-left: 10px;
+  border-radius: 50%;
+  width: 40px;
+  height: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background-color: #333;
+  border: 2px solid white;
+  color: white;
+  padding: 0;
+  transition: all 0.2s ease;
+  
+  &:hover {
+    background-color: #444;
+    transform: scale(1.05);
+  }
+
+  &:focus {
+    outline: none;
+    box-shadow: none;
+  }
+}
+
+// Update the search container to accommodate the new button
+.search-container {
+  .SearchBox {
+    align-items: center;
+    gap: 10px;
   }
 }

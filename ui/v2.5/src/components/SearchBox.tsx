@@ -19,6 +19,11 @@ import { Link } from "react-router-dom";
 import { useIntl } from "react-intl";
 import './SearchBox.scss';
 import TextUtils from "src/utils/text";
+import { useLocation } from 'react-router-dom';
+import { 
+    faArrowsLeftRightToLine, 
+    faLocationDot 
+  } from "@fortawesome/free-solid-svg-icons";
 
 interface SBProps {}
 
@@ -40,6 +45,23 @@ export const SearchBox: React.FC<SBProps> = () => {
     const [isSearchActive, setIsSearchActive] = useState(false);
     const [searchResults, setSearchResults] = useState<SearchResult[]>([]);
     const [isResultsVisible, setIsResultsVisible] = useState(false);
+    const [useDropdown, setUseDropdown] = useState(true);
+    const location = useLocation(); // Add this import from 'react-router-dom'
+
+    const handleDirectSearch = (searchTerm: string) => {
+        const currentPath = location.pathname;
+        if (currentPath !== '/') {
+          history.push(`${currentPath}?q=${encodeURIComponent(searchTerm)}`);
+        }
+      };
+
+
+    function CategoryPage() {
+        const location = useLocation();
+        const queryParams = new URLSearchParams(location.search);
+        const initialSearchTerm = queryParams.get('q') || '';
+        const [searchTerm, setSearchTerm] = useState(initialSearchTerm);
+    }
 
     type SearchResult = { 
         ShortName: string; 
@@ -47,6 +69,7 @@ export const SearchBox: React.FC<SBProps> = () => {
                  GQL.TagDataFragment | GQL.StudioDataFragment |
                  GQL.SlimGalleryDataFragment | GQL.GroupDataFragment | GQL.SceneMarkerDataFragment | GQL.SlimImageDataFragment
     };
+
 
     // Keyboard shortcuts
     useEffect(() => {
@@ -83,6 +106,18 @@ export const SearchBox: React.FC<SBProps> = () => {
     useEffect(() => {
         setIsSearchActive(searchTerm !== "");
     }, [searchTerm]);
+
+    useEffect(() => {
+        // Add or remove the search-active class to the nav element
+        const navElement = document.querySelector('nav');
+        if (navElement) {
+          if (searchTerm !== "" && useDropdown) {
+            navElement.classList.add('search-active', 'dropdown-active');
+          } else {
+            navElement.classList.remove('search-active', 'dropdown-active');
+          }
+        }
+      }, [searchTerm, useDropdown]);
 
     useEffect(() => {
         const handleScroll = () => {
@@ -128,9 +163,15 @@ export const SearchBox: React.FC<SBProps> = () => {
 
     // Query handlers
     function onChangeQuery(event: React.FormEvent<HTMLInputElement>) {
-        setSearch(event.currentTarget.value);
-        setSearchResults([]);
-    }
+        const newSearchTerm = event.currentTarget.value;
+        setSearch(newSearchTerm);
+        
+        if (!useDropdown) {
+          handleDirectSearch(newSearchTerm);
+        } else {
+          setSearchResults([]); // Original dropdown behavior
+        }
+      }
 
     function onClearQuery() {
         if (queryRef.current) queryRef.current.value = "";
@@ -381,29 +422,40 @@ export const SearchBox: React.FC<SBProps> = () => {
 
     return (
         <div className="search-container">
-            <div className="d-flex flex-row SearchBox">
-                <FormControl
-                    ref={queryRef}
-                    id="SearchBox"
-                    placeholder="Search"
-                    autoComplete="off"
-                    defaultValue=""
-                    onInput={onChangeQuery}
-                    className="query-text-field search-box-input bg-secondary text-white border-secondary mousetrap"
-                />
-                <Button
-                    variant="secondary"
-                    onClick={onClearQuery}
-                    className={`search-clear ${searchTerm !== "" ? "" : "d-none"}`}
-                >
-                    <Icon icon={faTimes} />
-                </Button>
-                {/* Search Results */}
-                <div className={`search-results ${searchTerm !== "" ? "Searching" : "hide"}`}>
-                    <div className="search-results-grid">
+          <div className="d-flex flex-row SearchBox">
+            {/* Search input and buttons */}
+            <FormControl
+              ref={queryRef}
+              id="SearchBox"
+              placeholder={useDropdown ? "Search All" : `Search ${location.pathname.substring(1)}`}
+              autoComplete="off"
+              defaultValue=""
+              onInput={onChangeQuery}
+              className="query-text-field search-box-input bg-secondary text-white border-secondary mousetrap"
+            />
+            <Button
+              variant="secondary"
+              onClick={() => setUseDropdown(!useDropdown)}
+              className="search-mode-toggle"
+              title={useDropdown ? "Switch to page search" : "Switch to dropdown search"}
+            >
+              <Icon icon={useDropdown ? faArrowsLeftRightToLine : faLocationDot} />
+            </Button>
+            <Button
+              variant="secondary"
+              onClick={onClearQuery}
+              className={`search-clear ${searchTerm !== "" ? "" : "d-none"}`}
+            >
+              <Icon icon={faTimes} />
+            </Button>
+      
+            {/* Search Results Dropdown */}
+            {useDropdown && (
+              <div className={`search-results ${searchTerm !== "" ? "Searching" : "hide"}`}>
+                <div className="search-results-grid">
                         {/* Performers Section */}
                         <div className="performers-category category">
-                            <Link to="/performers" className="category-link">
+                        <Link to={`/performers${searchTerm ? `?q=${encodeURIComponent(searchTerm)}` : ''}`} className="category-link">
                                 <h5>Performers</h5>
                             </Link>
                             <div className="category-grid">
@@ -422,7 +474,7 @@ export const SearchBox: React.FC<SBProps> = () => {
 
                         {/* Galleries Section */}
                         <div className="galleries-category category">
-                            <Link to="/galleries" className="category-link">
+                        <Link to={`/galleries${searchTerm ? `?q=${encodeURIComponent(searchTerm)}` : ''}`} className="category-link">
                                 <h5>Galleries</h5>
                             </Link>
                             <div className="category-grid">
@@ -441,7 +493,7 @@ export const SearchBox: React.FC<SBProps> = () => {
 
                         {/* Scenes Section */}
                         <div className="scenes-category category">
-                            <Link to="/scenes" className="category-link">
+                        <Link to={`/scenes${searchTerm ? `?q=${encodeURIComponent(searchTerm)}` : ''}`} className="category-link">
                                 <h5>Scenes</h5>
                             </Link>
                             <div className="category-grid">
@@ -460,7 +512,7 @@ export const SearchBox: React.FC<SBProps> = () => {
 
                         {/* Studios Section */}
                         <div className="studios-category category">
-                            <Link to="/studios" className="category-link">
+                        <Link to={`/studios${searchTerm ? `?q=${encodeURIComponent(searchTerm)}` : ''}`} className="category-link">
                                 <h5>Studios</h5>
                             </Link>
                             <div className="category-grid">
@@ -479,7 +531,7 @@ export const SearchBox: React.FC<SBProps> = () => {
 
                         {/* Tags Section */}
                         <div className="tags-category category">
-                            <Link to="/tags" className="category-link">
+                        <Link to={`/tags${searchTerm ? `?q=${encodeURIComponent(searchTerm)}` : ''}`} className="category-link">
                                 <h5>Tags</h5>
                             </Link>
                             <div className="category-grid">
@@ -499,7 +551,7 @@ export const SearchBox: React.FC<SBProps> = () => {
 
                         {/* Movies Section */}
                         <div className="movies-category category">
-                            <Link to="/groups" className="category-link">
+                        <Link to={`/groups${searchTerm ? `?q=${encodeURIComponent(searchTerm)}` : ''}`} className="category-link">
                                 <h5>Movies</h5>
                             </Link>
                             <div className="category-grid">
@@ -517,7 +569,7 @@ export const SearchBox: React.FC<SBProps> = () => {
                         </div>
                         {/* Markers Section */}
                         <div className="markers-category category">
-                            <Link to="/markers" className="category-link">
+                        <Link to={`/scenes/markers${searchTerm ? `?q=${encodeURIComponent(searchTerm)}` : ''}`} className="category-link">
                                 <h5>Markers</h5>
                             </Link>
                             <div className="category-grid">
@@ -564,7 +616,7 @@ export const SearchBox: React.FC<SBProps> = () => {
                         </div>
                         {/* Images Section */}
                         <div className="images-category category">
-                            <Link to="/images" className="category-link">
+                        <Link to={`/images${searchTerm ? `?q=${encodeURIComponent(searchTerm)}` : ''}`} className="category-link">
                                 <h5>Images</h5>
                             </Link>
                             <div className="category-grid">
@@ -584,7 +636,8 @@ export const SearchBox: React.FC<SBProps> = () => {
                         </div>
                     </div>
                 </div>
-            </div>
+            )}
         </div>
-    );
-};
+    </div>
+);
+}
