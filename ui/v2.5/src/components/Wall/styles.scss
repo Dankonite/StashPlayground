@@ -1,4 +1,33 @@
 .wall {
+  .wall-item-container {
+    position: relative;
+    overflow: hidden;
+  }
+
+  .wall-item-container:hover .download-button {
+    opacity: 1;
+  }
+
+  .download-button {
+    position: absolute;
+    top: 1px;
+    right: 1px;
+    background: rgba(0, 0, 0, 0.273);
+    border: none;
+    border-radius: 50%;
+    padding: 5px;
+    cursor: pointer;
+    opacity: 0;
+    transition: opacity 0.5s;
+    scale: 0.5;
+  }
+
+  .download-button svg {
+    fill: white;
+    width: 16px;
+    height: 16px;
+  }
+
   margin: 0 auto;
   max-width: 2250px;
 
@@ -165,4 +194,266 @@
       }
     }
   }
+
+  &-mine {
+    height: 11.25vw;
+    line-height: 0;
+    max-height: 253px;
+    max-width: 450px;
+    overflow: visible;
+    padding: 0;
+    transition: z-index 0.5s 0.5s;
+    z-index: 0;
+
+    @media (max-width: 576px) {
+      height: inherit;
+      max-width: 100%;
+      min-height: 210px;
+      width: 100%;
+    }
+
+    &-anchor:hover {
+      text-decoration: none;
+    }
+
+    &-media {
+      background-color: black;
+      height: 100%;
+      object-fit: contain;
+      transition: z-index 0s 0s;
+      width: 100%;
+      z-index: 0;
+    }
+
+    &-missing {
+      align-items: center;
+      color: $text-color;
+      display: flex;
+      font-size: 1vw;
+      justify-content: center;
+      text-align: center;
+
+      @media (max-width: 576px) {
+        font-size: 6vw;
+      }
+    }
+
+    &-preview {
+      left: 0;
+      position: absolute;
+      top: 0;
+      transition: z-index 0s 0s;
+      z-index: -1;
+    }
+
+    &-text {
+      background: linear-gradient(
+        rgba(255, 255, 255, 0.25),
+        rgba(255, 255, 255, 0.65)
+      );
+      bottom: 0;
+      color: #444;
+      font-weight: 700;
+      left: 0;
+      line-height: 1;
+      overflow: hidden;
+      padding: 5px;
+      position: absolute;
+      text-align: center;
+      width: 100%;
+      z-index: 2000000;
+
+      .wall-tag {
+        font-size: 10px;
+        font-weight: 400;
+        line-height: 1;
+        margin: 0 3px;
+      }
+    }
+
+    &-container {
+      background-color: black;
+      display: flex;
+      height: 100%;
+      justify-content: center;
+      position: relative;
+      transition: all 0.5s 0s;
+      width: 100%;
+      z-index: 0;
+    }
+
+    &-container.transform-origin-top-left {
+      transform-origin: top left;
+    }
+
+    &-container.transform-origin-top-right {
+      transform-origin: top right;
+    }
+
+    &-container.transform-origin-bottom-left {
+      transform-origin: bottom left;
+    }
+
+    &-container.transform-origin-bottom-right {
+      transform-origin: bottom right;
+    }
+
+    &-container.transform-origin-left {
+      transform-origin: left;
+    }
+
+    &-container.transform-origin-right {
+      transform-origin: right;
+    }
+
+    &-container.transform-origin-top {
+      transform-origin: top;
+    }
+
+    &-container.transform-origin-bottom {
+      transform-origin: bottom;
+    }
+
+    &-container.transform-origin-center {
+      transform-origin: center;
+    }
+
+    &::before {
+      background-color: black;
+      bottom: 0;
+      content: "";
+      left: 0;
+      opacity: 0;
+      pointer-events: none;
+      position: fixed;
+      right: 0;
+      top: 0;
+      transition: opacity 0.5s 0s ease-in-out;
+      z-index: -1;
+    }
+
+    @media (min-width: 576px) {
+      &:hover {
+        z-index: 2;
+
+        .wall-item-media {
+          transition-delay: 0.5s;
+          transition-duration: 0.5s;
+          z-index: 10;
+        }
+
+        &::before {
+          opacity: 0.8;
+          transition-delay: 0.5s;
+        }
+
+        .wall-item-container {
+          background-color: black;
+          position: relative;
+          transform: scale(2);
+          transition-delay: 0.5s;
+          z-index: 10;
+        }
+      }
+    }
+  }
+}
+
+.top-nav {
+  background-color: transparent !important; // Transparent background
+  box-shadow: none; // Remove any default shadow
+  padding: 1rem 2rem; // Adjust padding as needed
+}
+
+.bg-dark {
+  background-color: transparent !important;
+}
+
+.navbar-brand .brand-link {
+  color: #fff; // Ensure the brand name is visible against transparent background
+  font-size: 1.5rem;
+  font-weight: bold;
+}
+
+.nav-menu-icon {
+  font-size: 1.25rem;
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.nav-link {
+  color: #fff; // Floating text color
+  // text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.6); // Create a floating text effect
+  transition: transform 0.3s ease, text-shadow 0.3s ease;
+}
+
+.nav-link:hover,
+.nav-link:focus {
+  transform: translateY(-3px); // Slightly elevate text on hover/focus
+  text-shadow: 4px 4px 8px rgba(0, 0, 0, 0.8); // Enhance shadow on hover/focus
+}
+
+.minimal {
+  background: none !important;
+  border: none !important;
+  color: #fff;
+}
+
+.navbar-buttons .btn-primary {
+  background-color: rgba(255, 255, 255, 0.15); // Semi-transparent button background
+  border-color: rgba(255, 255, 255, 0.3); // Light border
+  color: #fff;
+  backdrop-filter: blur(10px); // Apply blur for a glass effect
+}
+
+.navbar-buttons .btn-primary:hover {
+  // background-color: rgba(255, 255, 255, 0.3); // Slightly more opaque on hover
+  color: #000; // Invert text color for contrast
+}
+
+.navbar-toggle {
+  color: #fff;
+}
+
+.navbar-collapse {
+  // background: rgba(0, 0, 0, 0.6); // Slightly darken the background when expanded
+  backdrop-filter: blur(5px); // Apply blur for a smooth glass effect
+}
+
+.navbar-collapse .nav-item {
+  margin-bottom: 1rem; // Space between stacked items
+}
+/* Ensure the navbar has flex properties to position items */
+.navbar-content {
+  display: flex;
+  align-items: center;
+  width: 100%;
+}
+
+.navbar-brand {
+  flex: 1;
+}
+
+.navbar-search {
+  flex: 2; /* Adjust this value if needed to control search box size */
+  display: flex;
+  justify-content: center;
+}
+
+.navbar-utility {
+  flex: 1;
+  display: flex;
+  justify-content: flex-end;
+}
+.top-nav {
+  transition: transform 0.3s ease, opacity 0.3s ease;
+}
+
+.top-nav.hidden {
+  transform: translateY(-100%);
+  opacity: 0;
+}
+
+.top-nav.visible {
+  transform: translateY(0);
+  opacity: 1;
 }

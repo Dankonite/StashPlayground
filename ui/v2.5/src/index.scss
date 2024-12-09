@@ -29,6 +29,7 @@
 @import "src/components/Dialogs/styles.scss";
 @import "flag-icons/css/flag-icons.min.css";
 
+
 /* stylelint-disable */
 #root {
   position: relative !important;
@@ -49,16 +50,16 @@ body {
 
   @include media-breakpoint-down(xs) {
     @media (orientation: portrait) {
-      padding: 1rem 0 5rem;
-    }
+      padding: 3.5rem 0 0;
   }
+}
 }
 
 #group-page,
 #performer-page,
 #studio-page,
 #tag-page {
-  margin-top: -0.5rem;
+  margin-top: -1rem;
 }
 
 code,
@@ -70,52 +71,26 @@ code,
 dd {
   white-space: pre-line;
 }
-
-.sticky.detail-header {
-  display: block;
-  min-height: 50px;
-  padding: unset;
-  position: fixed;
-  top: 3.3rem;
-  z-index: 10;
-
-  @media (max-width: 576px) {
-    display: none;
-  }
-
-  .group-name,
-  .performer-name,
-  .studio-name,
-  .tag-name {
-    font-weight: 800;
-  }
-
-  .sticky.detail-header-group {
-    padding: 1rem 2.5rem;
-
-    a.group-name,
-    a.performer-name,
-    a.studio-name,
-    a.tag-name {
-      color: #f5f8fa;
-      cursor: pointer;
-      font-weight: 800;
-    }
-
-    a,
-    span {
-      color: #d7d9db;
-      font-weight: 600;
-      padding-right: 0.5rem;
-    }
-
-    .detail-divider {
-      font-size: 1rem;
-      font-weight: 400;
-      opacity: 0.6;
-    }
-  }
+.pagination> .btn:first-child {
+  border-left: 1px solid #121212
 }
+.pagination> .btn:last-child {
+  border-right: 1px solid #121212
+}
+
+.tag-head {
+  display: flex;
+  flex-direction: column ;
+}
+.detail-group {
+  flex-grow: 1;
+}
+.custom-nav-tabs {
+  margin-bottom: -1rem;
+}
+// img, video, video-js {
+//   filter: blur(10px)
+// }
 
 .detail-expand-collapse {
   .btn-primary:focus,
@@ -133,7 +108,7 @@ dd {
 }
 
 .detail-header {
-  background-color: #192127;
+  background-color: #101010;
   min-height: 15rem;
   overflow: hidden;
   padding: 1rem;
@@ -256,15 +231,6 @@ dd {
     justify-content: center;
     margin: 0;
     padding: 5px 0;
-  }
-
-  .item-list-header {
-    align-content: center;
-    // border-bottom: solid 2px #192127;
-    display: flex;
-    justify-content: center;
-    margin: 0;
-    padding: 5px 0 0 0;
   }
 
   .item-list-container {
@@ -500,7 +466,7 @@ textarea.text-input {
 .zoom-0 {
   .gallery-card-image,
   .tag-card-image {
-    height: 180px;
+    max-height: 180px;
   }
 }
 
@@ -509,7 +475,7 @@ textarea.text-input {
 
   .gallery-card-image,
   .tag-card-image {
-    height: 240px;
+    max-height: 240px;
   }
 
   .image-card-preview {
@@ -520,7 +486,7 @@ textarea.text-input {
 .zoom-2 {
   .gallery-card-image,
   .tag-card-image {
-    height: 360px;
+    max-height: 360px;
   }
 
   .image-card-preview {
@@ -531,7 +497,7 @@ textarea.text-input {
 .zoom-3 {
   .tag-card-image,
   .gallery-card-image {
-    height: 480px;
+    max-height: 480px;
   }
 
   .image-card-preview {
@@ -858,9 +824,7 @@ div.dropdown-menu {
 
 .card {
   background-color: $card-bg;
-  border-radius: 3px;
-  box-shadow: 0 0 0 1px rgba(16, 22, 26, 0.4), 0 0 0 rgba(16, 22, 26, 0),
-    0 0 0 rgba(16, 22, 26, 0);
+  border-radius: .75rem;
   padding: 20px;
 }
 
@@ -999,15 +963,7 @@ div.dropdown-menu {
 .top-nav {
   justify-content: start;
   padding: 0.25rem 1rem;
-
-  @include media-breakpoint-down(xs) {
-    padding: 0.25rem 2rem;
-
-    @media (orientation: portrait) {
-      bottom: 0;
-      top: auto;
-    }
-  }
+  filter: drop-shadow(.5rem 0.5rem .5rem black);
 
   .navbar-toggler {
     padding: 0.5em 0;
@@ -1022,7 +978,6 @@ div.dropdown-menu {
   .navbar-collapse {
     justify-content: space-between;
     max-height: calc(100vh - 4rem);
-
     @include media-breakpoint-down(xs) {
       @media (orientation: landscape) {
         overflow-y: scroll;
@@ -1045,6 +1000,7 @@ div.dropdown-menu {
       }
 
       @include media-breakpoint-down(xs) {
+
         &:last-child {
           display: flex;
           min-height: 3rem;
@@ -1386,8 +1342,3 @@ select {
   width: 6rem;
 }
 
-.modal-body {
-  max-height: calc(100vh - 12rem);
-  overflow-y: auto;
-  padding-right: 1.5rem;
-}
