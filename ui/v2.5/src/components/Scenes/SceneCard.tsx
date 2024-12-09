@@ -30,6 +30,9 @@ import { PatchComponent } from "src/patch";
 import ScreenUtils from "src/utils/screen";
 import { StudioOverlay } from "../Shared/GridCard/StudioOverlay";
 import { GroupTag } from "../Groups/GroupTag";
+import { TagDialog } from "./TagDialog";
+import { MarkerDialog } from "./MarkerDialog";
+import { PerformerNameButton } from "../Shared/PerformerNameButton";
 
 interface IScenePreviewProps {
   isPortrait: boolean;
@@ -129,6 +132,8 @@ const SceneCardPopovers = PatchComponent(
       () => (props.scene.files.length > 0 ? props.scene.files[0] : undefined),
       [props.scene]
     );
+    const [tagModal, setTagModal] = useState(false);
+    const [markerModal, setMarkerModal] = useState(false);
 
     const sceneNumber = useMemo(() => {
       if (!props.fromGroupId) {
@@ -147,18 +152,26 @@ const SceneCardPopovers = PatchComponent(
       const popoverContent = props.scene.tags.map((tag) => (
         <TagLink key={tag.id} tag={tag} />
       ));
-
+      function onCancelTagDialog() {
+        setTagModal(false)
+      }
       return (
+        <>
+        {tagModal ? <TagDialog scene={props.scene} onCancel={onCancelTagDialog}/> : <></>}
         <HoverPopover
           className="tag-count"
           placement="bottom"
           content={popoverContent}
-        >
-          <Button className="minimal">
+          > 
+          <Button 
+            className="minimal"
+            onClick={() => setTagModal(true)}
+            >
             <Icon icon={faTag} />
             <span>{props.scene.tags.length}</span>
           </Button>
         </HoverPopover>
+      </>
       );
     }
 
@@ -201,21 +214,30 @@ const SceneCardPopovers = PatchComponent(
         const markerWithScene = { ...marker, scene: { id: props.scene.id } };
         return <SceneMarkerLink key={marker.id} marker={markerWithScene} />;
       });
+      function onCancelMarkerDialog() {
+        setMarkerModal(false)
+      }
 
       return (
+        <>
+        {markerModal ? <MarkerDialog scene={props.scene} onCancel={onCancelMarkerDialog}/> : <></>}
         <HoverPopover
           className="marker-count"
           placement="bottom"
           content={popoverContent}
         >
-          <Button className="minimal">
+          <Button 
+            className="minimal"
+            onClick={() => setMarkerModal(true)}
+            >
             <Icon icon={faMapMarkerAlt} />
             <span>{props.scene.scene_markers.length}</span>
           </Button>
         </HoverPopover>
+        </>
       );
     }
-
+    
     function maybeRenderOCounter() {
       if (props.scene.o_counter) {
         return (
