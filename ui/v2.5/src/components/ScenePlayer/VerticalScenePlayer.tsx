@@ -10,6 +10,10 @@ import * as GQL from "src/core/generated-graphql";
 import { VIDEO_PLAYER_ID } from "./util";
 import cx from "classnames";
 import "./VerticalScenePlayer.css";
+import { Button } from "react-bootstrap";
+import { Icon } from "src/components/Shared/Icon";
+import { faArrowLeft, faCamera, faLocationDot } from "@fortawesome/free-solid-svg-icons";
+
 
 // Utility function for taking screenshots
 function captureVideoFrame(video: HTMLVideoElement): string {
@@ -29,6 +33,73 @@ function downloadScreenshot(dataUrl: string, filename: string) {
   link.click();
   document.body.removeChild(link);
 }
+
+const ControlButtons: React.FC<{
+  onBack: () => void;
+  onScreenshot: () => void;
+  onNewMarker: () => void;
+}> = ({ onBack, onScreenshot, onNewMarker }) => {
+  return (
+    <div className="vertical-control-buttons">
+      <Button className="btn-clear" onClick={onBack}>
+        <Icon icon={faArrowLeft}/>
+      </Button>
+      <Button className="btn-clear" onClick={onScreenshot}>
+        <Icon icon={faCamera}/>
+      </Button>
+      <Button className="btn-clear" onClick={onNewMarker}>
+        <Icon icon={faLocationDot}/>
+      </Button>
+    </div>
+  );
+};
+
+const controlButtonStyles = `
+.vertical-control-buttons {
+  position: absolute;
+  right: 20px;
+  top: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  z-index: 9999;
+}
+
+.vertical-control-buttons .btn-clear {
+  background: rgba(0, 0, 0, 0.6);
+  border: none;
+  border-radius: 50%;
+  width: 40px;
+  height: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  padding: 0;
+  margin: 0;
+  transition: all 0.2s ease;
+  opacity: 0;
+}
+
+.VideoPlayer-card:hover .vertical-control-buttons .btn-clear {
+  opacity: 1;
+}
+
+.vertical-control-buttons .btn-clear:hover {
+  background: rgba(0, 0, 0, 0.8);
+  transform: scale(1.1);
+}
+
+.vertical-control-buttons .btn-clear svg {
+  width: 16px;
+  height: 16px;
+}
+
+/* Hide in fullscreen */
+.VideoPlayer-card.is-fullscreen .vertical-control-buttons {
+  display: none;
+}
+`;
 
 // Basic hotkey handler for essential controls
 function handleHotkeys(player: VideoJsPlayer, event: videojs.KeyboardEvent) {
@@ -72,32 +143,66 @@ function handleHotkeys(player: VideoJsPlayer, event: videojs.KeyboardEvent) {
 }
 
 // Progress bar component
+// Inside your VerticalScenePlayer.tsx
 const ProgressBar: React.FC<{
   currentTime: number;
   duration: number;
   onSeek: (time: number) => void;
 }> = ({ currentTime, duration, onSeek }) => {
   const progressRef = useRef<HTMLDivElement>(null);
+  const [previewTime, setPreviewTime] = useState<number>(0);
+  const [showPreview, setShowPreview] = useState(false);
+
+  const formatTime = (seconds: number): string => {
+    const minutes = Math.floor(seconds / 60);
+    const remainingSeconds = Math.floor(seconds % 60);
+    return `${minutes}:${remainingSeconds.toString().padStart(2, '0')}`;
+  };
+
+  const handleMouseMove = (e: React.MouseEvent<HTMLDivElement>) => {
+    if (!progressRef.current) return;
+    const rect = progressRef.current.getBoundingClientRect();
+    const percentage = 1 - ((e.clientY - rect.top) / rect.height);
+    const newTime = Math.max(0, Math.min(percentage * duration, duration));
+    setPreviewTime(newTime);
+    setShowPreview(true);
+  };
+
+  const handleMouseLeave = () => {
+    setShowPreview(false);
+  };
 
   const handleClick = (e: React.MouseEvent<HTMLDivElement>) => {
     if (!progressRef.current) return;
     const rect = progressRef.current.getBoundingClientRect();
     const percentage = 1 - ((e.clientY - rect.top) / rect.height);
-    onSeek(percentage * duration);
+    const newTime = Math.max(0, Math.min(percentage * duration, duration));
+    onSeek(newTime);
   };
 
   const progress = duration > 0 ? (currentTime / duration) * 100 : 0;
+  const previewPosition = previewTime / duration * 100;
 
   return (
     <div 
       className="shorts-progress-container" 
       ref={progressRef}
       onClick={handleClick}
+      onMouseMove={handleMouseMove}
+      onMouseLeave={handleMouseLeave}
     >
       <div 
         className="shorts-progress-bar"
         style={{ height: `${progress}%` }}
       />
+      {showPreview && (
+        <div 
+          className="shorts-time-preview"
+          style={{ top: `${100 - previewPosition}%` }}
+        >
+          {formatTime(previewTime)}
+        </div>
+      )}
     </div>
   );
 };
@@ -115,6 +220,8 @@ interface IVerticalScenePlayerProps {
   onPrevious: () => void;
   maxWidth?: number;
   maxHeight?: number;
+  onBack: () => void;
+  onNewMarker: () => void;
 }
 
 export const VerticalScenePlayer: React.FC<IVerticalScenePlayerProps> = ({
@@ -129,6 +236,8 @@ export const VerticalScenePlayer: React.FC<IVerticalScenePlayerProps> = ({
   onPrevious,
   maxWidth = 400,
   maxHeight = 712,
+  onBack,
+  onNewMarker
 }) => {
   const videoRef = useRef<HTMLDivElement>(null);
   const [player, setPlayer] = useState<VideoJsPlayer>();
@@ -142,42 +251,24 @@ export const VerticalScenePlayer: React.FC<IVerticalScenePlayerProps> = ({
   }, [player]);
 
   // Handle screenshot functionality
-  const handleScreenshot = useCallback(() => {
-    const player = getPlayer();
-    if (!player) return;
-
-    const video = player.el().querySelector('video');
+  const handleScreenshot = () => {
+    const video = document.getElementById("VideoJsPlayer_html5_api") as HTMLVideoElement;
     if (!video) return;
-
-    const screenshot = captureVideoFrame(video);
-    const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
-    const filename = `screenshot-${timestamp}.jpg`;
-    downloadScreenshot(screenshot, filename);
-  }, [getPlayer]);
-
-  // Screenshot button component
-  const ScreenshotButton: React.FC = () => (
-    <div 
-      className="screenshot-button"
-      onClick={handleScreenshot}
-      title="Take Screenshot"
-    >
-      <svg 
-        width="24" 
-        height="24" 
-        viewBox="0 0 24 24" 
-        fill="none" 
-        stroke="currentColor" 
-        strokeWidth="2"
-        strokeLinecap="round" 
-        strokeLinejoin="round"
-      >
-        <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/>
-        <circle cx="12" cy="13" r="4"/>
-      </svg>
-    </div>
-  );
-
+    
+    const canvas = document.createElement('canvas');
+    canvas.width = 3840;
+    canvas.height = 2160;
+    const ctx = canvas.getContext('2d');
+    if (!ctx) return;
+    
+    ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+    canvas.toBlob((blob) => {
+      if (blob) {
+        window.open(URL.createObjectURL(blob), '_blank');
+      }
+    });
+  };
+  
   // Initialize VideoJS player
   useEffect(() => {
     const options: VideoJsPlayerOptions = {
@@ -318,31 +409,65 @@ export const VerticalScenePlayer: React.FC<IVerticalScenePlayerProps> = ({
   const file = scene.files[0];
   const isPortrait = file?.height && file?.width && file.height > file.width;
 
-  return (
-    <div 
-      className={cx("VideoPlayer-container", { portrait: isPortrait })}
-      style={{
-        maxWidth: `${maxWidth}px`,
-        maxHeight: `${maxHeight}px`,
-      }}
-    >
-      <div 
-        className={cx("VideoPlayer-card", { "is-fullscreen": fullscreen })}
-      >
-        <div className="video-wrapper" ref={videoRef} />
-        {!fullscreen && (
-          <>
-            <ProgressBar
-              currentTime={currentTime}
-              duration={duration}
-              onSeek={handleSeek}
-            />
-            <ScreenshotButton />
-          </>
-        )}
-      </div>
+// Inside your VerticalScenePlayer return statement, modify it to include the controls:
+return (
+  <div 
+    className={cx("VideoPlayer-container", { portrait: isPortrait })}
+    style={{
+      maxWidth: `${maxWidth}px`,
+      maxHeight: `${maxHeight}px`,
+    }}
+  >
+    <div className={cx("VideoPlayer-card", { "is-fullscreen": fullscreen })}>
+      <div className="video-wrapper" ref={videoRef} />
+      {!fullscreen && (
+        <>
+          <ProgressBar
+            currentTime={currentTime}
+            duration={duration}
+            onSeek={handleSeek}
+          />
+          <div className="cheeseReset" style={{ opacity: 1 }}>
+            <Button 
+              className="btn-clear"
+              onClick={onBack}
+            >
+              <Icon icon={faArrowLeft}/>
+            </Button>
+            <Button
+              className="btn-clear ssbutton"
+              onClick={() => {
+                const video = document.getElementById("VideoJsPlayer_html5_api") as HTMLVideoElement;
+                if (!video) return;
+                
+                const canvas = document.createElement('canvas');
+                canvas.width = 3840;
+                canvas.height = 2160;
+                const ctx = canvas.getContext('2d');
+                if (!ctx) return;
+                
+                ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+                canvas.toBlob((blob) => {
+                  if (blob) {
+                    window.open(URL.createObjectURL(blob), '_blank');
+                  }
+                });
+              }}
+            >
+              <Icon icon={faCamera}/>
+            </Button>
+            <Button 
+              className="btn-clear nmbutton"
+              onClick={onNewMarker}
+            >
+              <Icon icon={faLocationDot}/>
+            </Button>
+          </div>
+        </>
+      )}
     </div>
-  );
+  </div>
+);
 };
 
 export default VerticalScenePlayer;

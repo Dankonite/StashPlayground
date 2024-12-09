@@ -1,3 +1,4 @@
+/* Container and Card Layout */
 .VideoPlayer-container {
   width: 100%;
   margin: 0 auto;
@@ -33,20 +34,23 @@
   position: relative;
 }
 
-/* Vertical Progress bar styles - Enhanced size and visibility */
+/* Vertical Progress Bar */
 .shorts-progress-container {
   position: absolute;
-  top: 50%;
-  left: 20px;
-  transform: translateY(-50%);
-  height: 80%; /* Much taller progress bar */
-  width: 6px; /* Slightly thicker base width */
-  background-color: rgba(255, 255, 255, 0.3); /* More visible background */
+  top: 10%;
+  right: 32px;
+  height: 80%;
+  width: 4px;
+  background-color: rgba(255, 255, 255, 0.3);
+  border-radius: 4px;
   cursor: pointer;
-  z-index: 3;
-  padding: 0 12px;
-  margin: 0 -12px;
-  border-radius: 3px;
+  z-index: 9999;
+  opacity: 0; /* Hide by default */
+  transition: opacity 0.2s ease; /* Smooth fade in/out */
+}
+
+.VideoPlayer-card:hover .shorts-progress-container {
+  opacity: 1; /* Show on player hover */
 }
 
 .shorts-progress-bar {
@@ -54,39 +58,118 @@
   bottom: 0;
   left: 0;
   width: 100%;
-  background-color: #ff0000;
+  background-color: #e8f9ff;
+  border-radius: 4px;
   transition: height 0.1s linear;
-  border-radius: 3px;
-  /* Add subtle glow effect */
-  box-shadow: 0 0 8px rgba(255, 0, 0, 0.3);
+  box-shadow: 0 0 8px rgba(255, 0, 251, 0.3);
 }
 
-/* Hover effects */
+/* Time Preview */
+.shorts-time-preview {
+  position: absolute;
+  right: 24px;
+  background-color: rgba(0, 0, 0, 0.8);
+  padding: 4px 8px;
+  border-radius: 4px;
+  color: white;
+  font-size: 12px;
+  transform: translateY(-50%);
+  pointer-events: none;
+  white-space: nowrap;
+}
+
+/* Progress Bar Hover Effects */
 .shorts-progress-container:hover {
-  width: 10px; /* Thicker on hover */
-  background-color: rgba(255, 255, 255, 0.4); /* More visible on hover */
+  /* width: 6px; */
+  background-color: rgba(255, 255, 255, 0.4);
 }
 
 .shorts-progress-container:hover .shorts-progress-bar {
-  background-color: #ff1a1a;
-  box-shadow: 0 0 12px rgba(255, 0, 0, 0.4);
+  background-color: #e1f4ff;
+  box-shadow: 0 0 12px rgba(255, 0, 255, 0.4);
+}
+
+/* Fix hover indicator alignment */
+.shorts-progress-container .shorts-progress-bar::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 0;
+  height: 0;
+  transition: all 0.2s ease;
 }
 
 .shorts-progress-container:hover .shorts-progress-bar::after {
   content: '';
   position: absolute;
-  top: -6px;
+  top: 0;
   left: 50%;
-  transform: translateX(-50%);
-  width: 16px; /* Larger handle */
-  height: 16px; /* Larger handle */
-  background-color: #ff0000;
+  transform: translate(-50%, -50%);
+  width: 12px;
+  height: 12px;
+  background-color: #eef7ff;
   border-radius: 50%;
   border: 2px solid white;
   box-shadow: 0 0 8px rgba(0, 0, 0, 0.4);
 }
+/* Add this to handle fullscreen mode */
+.VideoPlayer-card.is-fullscreen .shorts-progress-container {
+  position: fixed;
+  right: 32px;
+  height: 90vh;
+}
 
-/* VideoJS custom styles */
+/* Add this for mobile responsiveness */
+@media (max-width: 768px) {
+  .shorts-progress-container {
+    right: 16px;
+    height: 60vh;
+  }
+}
+/* Control Buttons */
+.VideoPlayer-container .cheeseReset {
+  position: absolute;
+  right: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  z-index: 3;
+  top: 20px;
+}
+
+.VideoPlayer-container .cheeseReset .btn-clear {
+  background: rgba(0, 0, 0, 0.6);
+  border: none;
+  border-radius: 50%;
+  width: 40px;
+  height: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  padding: 0;
+  margin: 0;
+  transition: all 0.2s ease;
+  opacity: 0;
+}
+
+.VideoPlayer-card:hover .cheeseReset .btn-clear {
+  opacity: 1;
+}
+
+.VideoPlayer-container .cheeseReset .btn-clear:hover {
+  background: rgba(0, 0, 0, 0.8);
+  transform: scale(1.1);
+}
+
+.VideoPlayer-container .cheeseReset .btn-clear svg {
+  width: 16px;
+  height: 16px;
+}
+
+/* VideoJS Custom Styles */
 .video-js.vjs-short-form {
   width: 100%;
   height: 100%;
@@ -111,35 +194,33 @@
   background-color: rgba(255, 255, 255, 0.3);
 }
 
-/* Control bar styling */
+/* Control Bar */
 .video-js.vjs-short-form .vjs-control-bar {
   background: linear-gradient(to top, rgba(0, 0, 0, 0.7), transparent);
-  padding-left: 48px; /* Increased padding to avoid overlap */
+  padding: 0 48px;
   z-index: 2;
-}
-
-/* Hide default progress bar */
-.video-js.vjs-short-form .vjs-progress-control {
-  display: none;
-}
-
-/* Control bar visibility */
-.VideoPlayer-card .vjs-control-bar {
   opacity: 0;
   transition: opacity 0.2s ease;
+}
+.video-js .vjs-control-bar::before {
+background:none;  
+bottom: 0;
+  content: "";
+  height: 10rem;
+  pointer-events: none;
+  position: absolute;
+  width: 100%;
 }
 
 .VideoPlayer-card:hover .vjs-control-bar {
   opacity: 1;
 }
 
-/* Always show progress bar */
-.shorts-progress-container {
-  opacity: 1 !important;
-  visibility: visible !important;
+.video-js.vjs-short-form .vjs-progress-control {
+  display: none;
 }
 
-/* Make video fill container while maintaining aspect ratio */
+/* Portrait Mode */
 .VideoPlayer-container.portrait .video-wrapper {
   padding-top: 177.78%;
 }
@@ -152,7 +233,7 @@
   height: 100%;
 }
 
-/* Custom loading spinner */
+/* Loading Spinner */
 .video-js .vjs-loading-spinner {
   border: 3px solid rgba(255, 255, 255, 0.2);
   border-top-color: #fff;
@@ -163,77 +244,74 @@
 }
 
 @keyframes vjs-spinner-spin {
-  0% {
-    transform: rotate(0deg);
-  }
-  100% {
-    transform: rotate(360deg);
-  }
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
 }
 
-/* Responsive adjustments */
+/* Fullscreen Adjustments */
+.VideoPlayer-card.is-fullscreen .cheeseReset,
+.VideoPlayer-card.is-fullscreen .shorts-progress-container {
+  display: none;
+}
+
+/* Mobile Adjustments */
 @media (max-width: 768px) {
   .shorts-progress-container {
     width: 4px;
-    left: 16px;
+    right: 16px;
   }
   
   .shorts-progress-container:hover {
-    width: 8px;
+    width: 6px;
+  }
+  
+  .VideoPlayer-container .cheeseReset {
+    right: 16px;
   }
 }
-/* Screenshot button styles */
-.screenshot-button {
+
+.VideoPlayer-container .video-js.vjs-short-form .vjs-time-control,
+.VideoPlayer-container .video-js.vjs-short-form .vjs-time-divider {
+  display: none !important;
+}
+
+
+.VideoPlayer-container .cheeseReset {
   position: absolute;
-  top: 20px;
   right: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  z-index: 9999;
+  top: 20px;
+}
+
+.VideoPlayer-container .cheeseReset .btn-clear {
+  background: rgba(0, 0, 0, 0.6);
+  border: none;
+  border-radius: 50%;
   width: 40px;
   height: 40px;
-  background-color: rgba(0, 0, 0, 0.6);
-  border-radius: 50%;
-  cursor: pointer;
   display: flex;
   align-items: center;
   justify-content: center;
-  z-index: 3;
+  color: white;
+  padding: 0;
+  margin: 0;
   transition: all 0.2s ease;
-  opacity: 0;
 }
 
-.VideoPlayer-card:hover .screenshot-button {
-  opacity: 1;
-}
-
-.screenshot-button:hover {
-  background-color: rgba(0, 0, 0, 0.8);
+.VideoPlayer-container .cheeseReset .btn-clear:hover {
+  background: rgba(0, 0, 0, 0.8);
   transform: scale(1.1);
 }
 
-.screenshot-button svg {
-  color: white;
-  width: 24px;
-  height: 24px;
+.VideoPlayer-container .cheeseReset .btn-clear svg {
+  width: 16px;
+  height: 16px;
 }
 
-/* Add flash animation */
-@keyframes screenshot-flash {
-  0% {
-    background-color: rgba(255, 255, 255, 0);
-  }
-  50% {
-    background-color: rgba(255, 255, 255, 0.3);
-  }
-  100% {
-    background-color: rgba(255, 255, 255, 0);
-  }
-}
-
-.screenshot-flash {
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  pointer-events: none;
-  animation: screenshot-flash 0.3s ease-out;
+/* Hide in fullscreen */
+.VideoPlayer-card.is-fullscreen .cheeseReset {
+  display: none;
 }

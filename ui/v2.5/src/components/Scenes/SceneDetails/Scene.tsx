@@ -1492,6 +1492,7 @@ const SceneLoader: React.FC<RouteComponentProps<ISceneParams>> = ({
   function onQueueSceneClicked(sceneID: string) {
     loadScene(sceneID, autoPlayOnSelected, getScenePage(sceneID));
   }
+  
 
   if (!scene) {
     if (loading) return <LoadingIndicator />;
@@ -1532,6 +1533,9 @@ const SceneLoader: React.FC<RouteComponentProps<ISceneParams>> = ({
     link.click();
     document.body.removeChild(link);
   };
+
+  const isVerticalVideo = scene.tags.some(tag => tag.name === "Vertical Video");
+
   
   const markerCar = 
   <div className="markerCar">
@@ -1638,19 +1642,44 @@ const SceneLoader: React.FC<RouteComponentProps<ISceneParams>> = ({
           <div className="topScene">
             {leftDeets}
             <div className="scene-player-container">
-              <ScenePlayer
-              key={cheeseKey}
-              play={play}
-              scene={scene}
-              hideScrubberOverride={hideScrubber}
-              autoplay={false}
-              permitLoop={!continuePlaylist}
-              initialTimestamp={initialTimestamp}
-              sendSetTimestamp={getSetTimestamp}
-              onComplete={onComplete}
-              onNext={() => queueNext(true)}
-              onPrevious={() => queuePrevious(true)}
-              />
+            {isVerticalVideo ? (
+  <VerticalScenePlayer
+    key={cheeseKey}
+    scene={scene}
+    play={play}
+    autoplay={false}
+    permitLoop={!continuePlaylist}
+    initialTimestamp={initialTimestamp}
+    sendSetTimestamp={getSetTimestamp}
+    onComplete={onComplete}
+    onNext={() => queueNext(true)}
+    onPrevious={() => queuePrevious(true)}
+    onBack={() => {
+      if (Number.parseInt(queryParams.get("t") ?? "0", 10)) {
+        history.push(`/scenes/${scene.id}/`);
+      }
+      autoplay = false;
+      setFakeAutoPlay(false);
+      setKey(cheeseKey + 1);
+    }}
+    onNewMarker={() => setMarkerModal(true)}
+    hideScrubberOverride={hideScrubber}
+  />
+) : (
+  <ScenePlayer
+    key={cheeseKey}
+    play={play}
+    scene={scene}
+    hideScrubberOverride={hideScrubber}
+    autoplay={false}
+    permitLoop={!continuePlaylist}
+    initialTimestamp={initialTimestamp}
+    sendSetTimestamp={getSetTimestamp}
+    onComplete={onComplete}
+    onNext={() => queueNext(true)}
+    onPrevious={() => queuePrevious(true)}
+  />
+)}
             </div>
             <div className="tsfloat">
             <ScenePreview
