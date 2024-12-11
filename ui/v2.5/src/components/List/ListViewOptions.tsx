@@ -15,6 +15,7 @@ import {
   faSquare,
   faTags,
   faThLarge,
+  faIdCard,
 } from "@fortawesome/free-solid-svg-icons";
 
 interface IListViewOptionsProps {
@@ -84,6 +85,8 @@ export const ListViewOptions: React.FC<IListViewOptionsProps> = ({
           return faSquare;
         case DisplayMode.Tagger:
           return faTags;
+        case DisplayMode.Card:
+          return faIdCard
       }
     }
     function getLabel(option: DisplayMode) {
@@ -100,6 +103,9 @@ export const ListViewOptions: React.FC<IListViewOptionsProps> = ({
           break;
         case DisplayMode.Tagger:
           displayModeId = "tagger";
+          break;
+        case DisplayMode.Card:
+          displayModeId = "Card";
           break;
       }
       return intl.formatMessage({ id: `display_mode.${displayModeId}` });

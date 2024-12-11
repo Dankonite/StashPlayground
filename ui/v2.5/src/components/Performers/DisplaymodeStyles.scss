@@ -1,0 +1,160 @@
+.performer.card-mode {
+
+div.row:has(.performer-card) {
+  display: flex;
+  flex-wrap: nowrap;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch; /* Enable smooth scrolling on iOS */
+  justify-content: unset!important; /* Center align cards */
+  width: 100vw; /* Make the row take the full width of the viewport */
+  padding: 85px; /* Add padding for the row */
+  .performer-card__country-string {
+    display: none;
+  }
+  
+  .performer-card__country-flag {
+    position:absolute;
+    top: 1rem;
+    left: 1rem;
+  }
+  .favorite-button {
+    position:absolute;
+    top: 1rem;
+    right: 1rem;
+  }
+  .performer-card {
+    flex: 0 0 20%; /* Adjust to show 5 cards */
+    max-width: 20%; /* Ensure each card takes up 20% of the width */
+    margin: 0 10px; /* Adjust margin between cards */
+    box-sizing: border-box; /* Include padding and border in element's total width and height */
+    background-color: #20202040;
+    border-radius: 0.75rem;
+  }
+  
+  .performer-card-image {
+    width: 100%;
+    height: auto;
+    border-radius: 0.75rem;
+  }
+  
+  .performer-card-title {
+    margin-top: 1rem;
+    margin-bottom: 0.5rem;
+    font-size: 1.2rem;
+    font-weight: bold;
+    color: #fff;
+    text-align: center;
+  }
+  a, a:visited, a:hover {
+    text-decoration: none;
+    color: #fff
+  }
+  .performer-card-details {
+    color: #ccc;
+    font-size: 0.9rem;
+  }
+  .performer-card-age {
+    text-align: center;
+  }
+  .performer-card-gender {
+    text-transform: capitalize;
+    margin-bottom: 0.5rem;
+    text-align: center;
+  }
+  
+  .card {
+    &.performer-card {
+      padding: 0 0 1rem 0;
+    }
+  }
+}
+.row::-webkit-scrollbar {
+  display: none; /* Hide scrollbar */
+}
+  .scrape-dialog .performer-image {
+  display: block;
+  margin-bottom: 10px;
+  margin-top: 10px;
+  max-width: 100%;
+}
+
+#performer-scraper-popover {
+  z-index: 1;
+}
+
+.PerformerScrapeModal {
+  &-list {
+    list-style: none;
+    max-height: 50vh;
+    overflow-x: hidden;
+    overflow-y: auto;
+    padding-inline-start: 0;
+
+    li {
+      cursor: pointer;
+    }
+  }
+}
+
+.flex-aligned {
+  align-items: center;
+  column-gap: 0.5rem;
+  display: flex;
+}
+
+.fa-mars {
+  color: #89cff0;
+}
+
+.fa-venus {
+  color: #f38cac;
+}
+
+.fa-transgender-alt {
+  color: #c8a2c8;
+}
+
+.performer-height .height-imperial,
+.performer-weight .weight-imperial,
+.performer-penis-length .penis-length-imperial {
+  &::before {
+    content: " (";
+  }
+
+  &::after {
+    content: ")";
+  }
+}
+
+.penis-circumcised {
+  &::before {
+    content: " ";
+  }
+}
+
+.favourite-data .favorite {
+  color: #ff7373;
+}
+
+.performer-table .height-imperial,
+.performer-table .weight-imperial,
+.performer-table .penis-length-imperial,
+.performer-disambiguation {
+  color: #808080;
+  font-size: 0.875em;
+}
+
+.performer-table .age-data span {
+  border-bottom: 1px dotted #f5f8fa;
+}
+
+.performer-result .performer-details > span {
+  &::after {
+    content: " • ";
+  }
+
+  &:last-child::after {
+    content: "";
+  }
+}
+}

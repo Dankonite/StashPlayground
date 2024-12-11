@@ -199,6 +199,7 @@ function getMarkerTitle(marker: MarkerFragment) {
 
 interface IScenePlayerProps {
   scene: GQL.SceneDataFragment;
+  play: boolean;
   hideScrubberOverride: boolean;
   autoplay?: boolean;
   permitLoop?: boolean;
@@ -211,6 +212,7 @@ interface IScenePlayerProps {
 
 export const ScenePlayer: React.FC<IScenePlayerProps> = ({
   scene,
+  play,
   hideScrubberOverride,
   autoplay,
   permitLoop = true,
@@ -243,6 +245,7 @@ export const ScenePlayer: React.FC<IScenePlayerProps> = ({
   const [fullscreen, setFullscreen] = useState(false);
   const [showScrubber, setShowScrubber] = useState(false);
 
+  const initialTimestamp = useRef(-1);
   const started = useRef(false);
   const auto = useRef(false);
   const interactiveReady = useRef(false);
@@ -450,11 +453,9 @@ export const ScenePlayer: React.FC<IScenePlayerProps> = ({
     if (!player) return;
 
     function canplay(this: VideoJsPlayer) {
-      // if we're seeking before starting, don't set the initial timestamp
-      // when starting from the beginning, there is a small delay before the event
-      // is triggered, so we can't just check if the time is 0
-      if (this.currentTime() >= 0.1) {
-        return;
+      if (initialTimestamp.current !== -1) {
+        this.currentTime(initialTimestamp.current);
+        initialTimestamp.current = -1;
       }
     }
 
@@ -515,8 +516,15 @@ export const ScenePlayer: React.FC<IScenePlayerProps> = ({
       }
       setTime(this.currentTime());
     }
-
+    function moveButtons() {
+      let ssbutton = (document.querySelector('.ssbutton'));
+      let nmbutton = (document.querySelector('.nmbutton'));
+      let duration = (document.querySelector('.vjs-duration'));
+      duration?.appendChild(ssbutton!);
+      duration?.appendChild(nmbutton!);
+    }
     player.on("play", onplay);
+    player.on("play", moveButtons)
     player.on("pause", pause);
     player.on("seeking", seeking);
     player.on("timeupdate", timeupdate);
@@ -658,6 +666,7 @@ export const ScenePlayer: React.FC<IScenePlayerProps> = ({
       startPosition = resumeTime;
     }
 
+    initialTimestamp.current = startPosition;
     setTime(startPosition);
 
     player.load();
@@ -665,10 +674,6 @@ export const ScenePlayer: React.FC<IScenePlayerProps> = ({
 
     player.ready(() => {
       player.vttThumbnails().src(scene.paths.vtt ?? null);
-
-      if (startPosition) {
-        player.currentTime(startPosition);
-      }
     });
 
     started.current = false;
@@ -797,6 +802,7 @@ export const ScenePlayer: React.FC<IScenePlayerProps> = ({
     if (started.current) {
       getPlayer()?.currentTime(seconds);
     } else {
+      initialTimestamp.current = seconds;
       setTime(seconds);
     }
   }
@@ -820,12 +826,24 @@ export const ScenePlayer: React.FC<IScenePlayerProps> = ({
     }
   }
 
+  useEffect(
+    () => {
+      const player = getPlayer();
+      if (!player) return;
+      if (player.paused()) {
+        player.play();
+      } else {
+        player.pause();
+      }
+    },
+    [play],
+  );
   const isPortrait =
     file && file.height && file.width && file.height > file.width;
 
   return (
     <div
-      className={cx("VideoPlayer", { portrait: isPortrait, "no-file": !file })}
+      className={cx("VideoPlayer", { portrait: isPortrait })}
       onKeyDownCapture={onKeyDown}
     >
       <div className="video-wrapper" ref={videoRef} />

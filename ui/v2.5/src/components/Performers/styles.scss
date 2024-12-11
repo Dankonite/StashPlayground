@@ -251,3 +251,16 @@
   overflow-y: auto;
   padding-right: 1.5rem;
 }
+
+/* Alt image animation */
+.perfbuttondiv:hover .alt-hidden {
+  opacity: 1!important;
+}
+.perfbuttondiv:hover .performer {
+  opacity: 0;
+}
+.alt-hidden {
+  opacity: 0;
+  position: absolute;
+  left: 2rem;
+}
