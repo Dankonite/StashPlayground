@@ -173,6 +173,9 @@
       "active_instance": "Active stash-box instance:",
       "blacklist_desc": "Blacklist items are excluded from queries. Note that they are regular expressions and also case-insensitive. Certain characters must be escaped with a backslash: {chars_require_escape}",
       "blacklist_label": "Blacklist",
+      "errors": {
+        "blacklist_duplicate": "Duplicate blacklist item"
+      },
       "mark_organized_desc": "Immediately mark the scene as Organized after the Save button is clicked.",
       "mark_organized_label": "Mark as Organized on save",
       "query_mode_auto": "Auto",
@@ -844,7 +847,18 @@
     "not_matches_regex": "not matches regex",
     "not_null": "is not null"
   },
+  "criterion_modifier_values": {
+    "any": "Any",
+    "any_of": "Any of",
+    "none": "None",
+    "only": "Only"
+  },
   "custom": "Custom",
+  "custom_fields": {
+    "field": "Field",
+    "title": "Custom Fields",
+    "value": "Value"
+  },
   "date": "Date",
   "date_format": "YYYY-MM-DD",
   "datetime_format": "YYYY-MM-DD HH:MM",
@@ -1026,6 +1040,12 @@
   },
   "empty_server": "Add some scenes to your server to view recommendations on this page.",
   "errors": {
+    "custom_fields": {
+      "duplicate_field": "Field name must be unique",
+      "field_name_length": "Field name must fewer than 65 characters",
+      "field_name_required": "Field name is required",
+      "field_name_whitespace": "Field name cannot have leading or trailing whitespace"
+    },
     "header": "Error",
     "image_index_greater_than_zero": "Image index must be greater than 0",
     "invalid_javascript_string": "Invalid javascript code: {error}",
@@ -1098,6 +1118,7 @@
   "images": "Images",
   "include_parent_tags": "Include parent tags",
   "include_sub_group_content": "Include sub-group content",
+  "include_sub_groups": "Include sub-groups",
   "include_sub_studio_content": "Include sub-studio content",
   "include_sub_studios": "Include subsidiary studios",
   "include_sub_tag_content": "Include sub-tag content",
@@ -1111,7 +1132,8 @@
   "last_played_at": "Last Played At",
   "library": "Library",
   "loading": {
-    "generic": "Loading…"
+    "generic": "Loading…",
+    "plugins": "Loading plugins…"
   },
   "marker_count": "Marker Count",
   "markers": "Markers",
@@ -1291,7 +1313,9 @@
     "errors": {
       "something_went_wrong": "Oh no! Something went wrong!",
       "something_went_wrong_description": "If this looks like a problem with your inputs, go ahead and click back to fix them up. Otherwise, raise a bug on the {githubLink} or seek help in the {discordLink}.",
-      "something_went_wrong_while_setting_up_your_system": "Something went wrong while setting up your system. Here is the error we received: {error}"
+      "something_went_wrong_while_setting_up_your_system": "Something went wrong while setting up your system. Here is the error we received: {error}",
+      "unable_to_retrieve_system_status": "Unable to retrieve system status: {error}",
+      "unexpected_error": "An unexpected error occurred: {error}"
     },
     "folder": {
       "file_path": "File path",
