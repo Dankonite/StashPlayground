@@ -1371,6 +1371,19 @@ input[type="range"].blue-slider {
   visibility: visible;
   height: auto;
 }
+
+/*NextBar Animation */
+.nextbars-chevron-fade {
+  max-height: 0;
+  overflow: hidden;
+  transition: max-height 0.3s ease-out, opacity 0.2s ease-out;
+  opacity: 0;
+}
+
+.nextbars-chevron-fade.show {
+  max-height: 1000px; /* Adjust this value based on your content's maximum height */
+  opacity: 1;
+}
 /* MarkerPreview Download*/
 .marker-preview-container {
   position: relative;

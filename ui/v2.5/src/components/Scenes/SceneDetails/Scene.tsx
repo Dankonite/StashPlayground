@@ -1302,6 +1302,7 @@ const SceneLoader: React.FC<RouteComponentProps<ISceneParams>> = ({
   );
 
   const [isChevronDeetExpanded, setIsChevronDeetExpanded] = useState(false);
+  const [isNextBarsExpanded, setIsNextBarsExpanded] = useState(true);
 
   function getSetTimestamp(fn: (value: number) => void) {
     _setTimestamp.current = fn;
@@ -1769,9 +1770,29 @@ const SceneLoader: React.FC<RouteComponentProps<ISceneParams>> = ({
                   </div>
                 )}
               </div>
-                <div className="dabars">
-                  <NextBars scene={scene}/>
-                </div>
+                {/* New NextBars section with chevron */}
+          <div className="mt-5">
+            <div 
+              className="d-flex justify-content-center cursor-pointer"
+              style={{
+                transition: 'transform 0.2s',
+              }}
+              onMouseEnter={(e) => e.currentTarget.style.transform = 'translateY(-3px)'}
+              onMouseLeave={(e) => e.currentTarget.style.transform = 'translateY(0)'}
+              onClick={() => setIsNextBarsExpanded(!isNextBarsExpanded)}
+            >
+              <FontAwesomeIcon 
+                icon={isNextBarsExpanded ? faChevronUp : faChevronDown} 
+                size="lg"
+              />
+            </div>
+            
+            <div className={`mt-3 nextbars-chevron-fade ${isNextBarsExpanded ? 'show' : ''}`}>
+              <div className="dabars">
+                <NextBars scene={scene}/>
+              </div>
+            </div>
+          </div>
               </div>
             <ScenePage 
             classFake={`sp ${editMode ? "" : "d-none"}`}
