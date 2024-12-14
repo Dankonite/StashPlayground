@@ -1384,12 +1384,31 @@ input[type="range"].blue-slider {
   max-height: 1000px; /* Adjust this value based on your content's maximum height */
   opacity: 1;
 }
+
+/* Hide the chevron by default */
+.nextbars-chevron-container {
+  opacity: 0;
+  transition: opacity 0.2s ease-out;
+}
+
+/* Show on parent hover */
+.barsordeets:hover .nextbars-chevron-container {
+  opacity: 1;
+}
 /* MarkerPreview Download*/
 .marker-preview-container {
   position: relative;
   width: fit-content;
 }
-
+.cheeseReset-vertical {
+  position: absolute;
+  right: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  z-index: 9999;
+  bottom: 200px;
+}
 .marker-preview-container .download-button {
   position: absolute;
   right: 5px;

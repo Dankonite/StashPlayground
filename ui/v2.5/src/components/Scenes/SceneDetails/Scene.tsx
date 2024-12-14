@@ -99,8 +99,8 @@ import cx from "classnames";
 import { sortPerformers } from "src/core/performers";
 import { HoverPopover } from "src/components/Shared/HoverPopover";
 import { SceneMarkerForm } from "./SceneMarkerForm";
-import VerticalScenePlayer from "src/components/ScenePlayer/VerticalScenePlayer";
 import { GroupCard } from "src/components/Groups/GroupCard";
+import VerticalScenePlayer from "src/components/ScenePlayer/VerticalScenePlayer";
 
 interface Oprops {
   scene: GQL.SceneDataFragment
@@ -1245,6 +1245,9 @@ const SceneLoader: React.FC<RouteComponentProps<ISceneParams>> = ({
     () => (scene?.files.length! > 0 ? scene?.files[0] : undefined),
     [scene]
   );
+  const backButtonRef = useRef<HTMLButtonElement>(null);
+  const markerButtonRef = useRef<HTMLButtonElement>(null);
+
   const [editMode, setEditMode] = useState(false)
   // useLayoutEffect to update before paint
   useLayoutEffect(() => {
@@ -1604,10 +1607,13 @@ const SceneLoader: React.FC<RouteComponentProps<ISceneParams>> = ({
       {TextUtils.resolution(file.width, file.height)}
     </h6>
   )}
-  <Button
-    className="btn-success mt-4"
-    onClick={() => setPlay(!play)}
-  >
+<Button
+  className="btn-success mt-4"
+  onClick={() => {
+    setPlay(!play);
+    setFakeAutoPlay(false); // Add this line
+  }}
+>
     <Icon icon={faPlay}/> Watch
   </Button>
   <UtilityBar scene={scene} setEditMode={() => setEditMode(!editMode)}/>
@@ -1644,28 +1650,21 @@ const SceneLoader: React.FC<RouteComponentProps<ISceneParams>> = ({
             {leftDeets}
             <div className="scene-player-container">
             {isVerticalVideo ? (
-  <VerticalScenePlayer
-    key={cheeseKey}
-    scene={scene}
-    play={play}
-    autoplay={false}
-    permitLoop={!continuePlaylist}
-    initialTimestamp={initialTimestamp}
-    sendSetTimestamp={getSetTimestamp}
-    onComplete={onComplete}
-    onNext={() => queueNext(true)}
-    onPrevious={() => queuePrevious(true)}
-    onBack={() => {
-      if (Number.parseInt(queryParams.get("t") ?? "0", 10)) {
-        history.push(`/scenes/${scene.id}/`);
-      }
-      autoplay = false;
-      setFakeAutoPlay(false);
-      setKey(cheeseKey + 1);
-    }}
-    onNewMarker={() => setMarkerModal(true)}
-    hideScrubberOverride={hideScrubber}
-  />
+ <VerticalScenePlayer
+ key={cheeseKey} // Add this key
+ scene={scene}
+ play={play}
+ autoplay={false} // Change this from false to fakeAutoPlay
+ permitLoop={!continuePlaylist}
+ initialTimestamp={initialTimestamp}
+ sendSetTimestamp={getSetTimestamp}
+ onComplete={onComplete}
+ onNext={() => queueNext(true)}
+ onPrevious={() => queuePrevious(true)}
+ hideScrubberOverride={hideScrubber}
+ backButton={backButtonRef.current}
+ markerButton={markerButtonRef.current}
+/>
 ) : (
   <ScenePlayer
     key={cheeseKey}
@@ -1681,56 +1680,86 @@ const SceneLoader: React.FC<RouteComponentProps<ISceneParams>> = ({
     onPrevious={() => queuePrevious(true)}
   />
 )}
-            </div>
-            <div className="tsfloat">
-            <ScenePreview
-                  image={scene.paths.screenshot ?? ""}
-                  video={scene.paths.preview ?? ""}
-                  isPortrait={scene.tags.some(tag => tag.name === "Vertical Video")}
-                  soundActive={false}
-                  />
-            </div>
-          </div>
-          <div className="d-flex flex-row under-player">
-              <div className={`barsordeets ${editMode ? "d-none" : ""}`}>
-                <div className="cheeseReset" key={cheeseKey}>
-                  <Button 
-                  className="btn-clear"
-                  onClick={() => {
-                    if (Number.parseInt(queryParams.get("t") ?? "0", 10)) history.push(`/scenes/${scene.id}/`)
-                    autoplay=false;
-                    console.info("autoplay false")
-                    setFakeAutoPlay(false);
-                    setKey(cheeseKey + 1); 
-                  }}
-                  >
-                    <Icon icon={faArrowLeft}/>
-                  </Button>
-                  <Button
-                  className="btn-clear ssbutton"
-                  onClick={() => {
-                    let canvas = document.createElement('canvas');
-                    let video = (document.getElementById("VideoJsPlayer_html5_api") as HTMLVideoElement);
-                    canvas.width = 3840;
-                    canvas.height = 2160;
-                    let ctx = canvas.getContext('2d');
-                    ctx!.drawImage( video, 0, 0, canvas.width, canvas.height );
-                    canvas.toBlob((blob) => {window.open(URL.createObjectURL(blob!), '_blank')})
-                  }}
-                  >
-                    <Icon icon={faCamera}/>
-                  </Button>
-                  <Button 
-                  className="btn-clear nmbutton"
-                  onClick={() => {
-                    setMarkerModal(true);
-                  }}
-                  >
-                    <Icon icon={faLocationDot}/>
-                  </Button>
-                  {markerModal ? <NewMarkerDialog onCancel={() => setMarkerModal(false)} scene={scene}/> : ""}
-                </div>
-                <div className="dadeets">
+      </div>
+      <div className="tsfloat">
+      <ScenePreview
+            image={scene.paths.screenshot ?? ""}
+            video={scene.paths.preview ?? ""}
+            isPortrait={scene.tags.some(tag => tag.name === "Vertical Video")}
+            soundActive={false}
+            />
+      </div>
+      </div>
+      <div className="d-flex flex-row under-player">
+      <div className={`barsordeets ${editMode ? "d-none" : ""}`}>
+  {!isVerticalVideo ? (
+    // Original cheeseReset for normal mode
+    <div className="cheeseReset" key={cheeseKey}>
+      <Button 
+        className="btn-clear"
+        onClick={() => {
+          if (Number.parseInt(queryParams.get("t") ?? "0", 10)) history.push(`/scenes/${scene.id}/`)
+          autoplay=false;
+          console.info("autoplay false")
+          setFakeAutoPlay(false);
+          setKey(cheeseKey + 1); 
+        }}
+      >
+        <Icon icon={faArrowLeft}/>
+      </Button>
+      <Button
+        className="btn-clear ssbutton"
+        onClick={() => {
+          let canvas = document.createElement('canvas');
+          let video = (document.getElementById("VideoJsPlayer_html5_api") as HTMLVideoElement);
+          canvas.width = 3840;
+          canvas.height = 2160;
+          let ctx = canvas.getContext('2d');
+          ctx!.drawImage( video, 0, 0, canvas.width, canvas.height );
+          canvas.toBlob((blob) => {window.open(URL.createObjectURL(blob!), '_blank')})
+        }}
+      >
+        <Icon icon={faCamera}/>
+      </Button>
+      <Button 
+        className="btn-clear nmbutton"
+        onClick={() => {
+          setMarkerModal(true);
+        }}
+      >
+        <Icon icon={faLocationDot}/>
+      </Button>
+      {markerModal ? <NewMarkerDialog onCancel={() => setMarkerModal(false)} scene={scene}/> : ""}
+    </div>
+  ) : (
+    // New vertical mode cheeseReset
+    <div style={{ display: 'none' }}>
+        <Button
+          ref={backButtonRef}
+          className="btn-clear"
+          onClick={() => {
+            if (Number.parseInt(queryParams.get("t") ?? "0", 10)) history.push(`/scenes/${scene.id}/`)
+            autoplay = false;
+            setFakeAutoPlay(false);
+            setPlay(false);
+            setKey(cheeseKey + 1);
+          }}
+        >
+          <Icon icon={faArrowLeft}/>
+        </Button>
+        <Button
+          ref={markerButtonRef}
+          className="btn-clear nmbutton"
+          onClick={() => {
+            setMarkerModal(true);
+          }}
+        >
+          <Icon icon={faLocationDot}/>
+        </Button>
+        {markerModal ? <NewMarkerDialog onCancel={() => setMarkerModal(false)} scene={scene}/> : ""}
+      </div>
+  )}
+  <div className="dadeets">
                 {scene.date ? <span className="dadate mt-3">{scene.date!}</span> : ""}
                 {scene.details ? <span className="dadetails mt-5">{scene.details!}</span> : ""}
                 <PerformerPill performers={scene.performers}/>
@@ -1771,27 +1800,29 @@ const SceneLoader: React.FC<RouteComponentProps<ISceneParams>> = ({
                 )}
               </div>
                 {/* New NextBars section with chevron */}
-          <div className="mt-5">
-            <div 
-              className="d-flex justify-content-center cursor-pointer"
-              style={{
-                transition: 'transform 0.2s',
-              }}
-              onMouseEnter={(e) => e.currentTarget.style.transform = 'translateY(-3px)'}
-              onMouseLeave={(e) => e.currentTarget.style.transform = 'translateY(0)'}
-              onClick={() => setIsNextBarsExpanded(!isNextBarsExpanded)}
-            >
-              <FontAwesomeIcon 
-                icon={isNextBarsExpanded ? faChevronUp : faChevronDown} 
-                size="lg"
-              />
-            </div>
-            
-            <div className={`mt-3 nextbars-chevron-fade ${isNextBarsExpanded ? 'show' : ''}`}>
-              <div className="dabars">
-                <NextBars scene={scene}/>
+                <div className="mt-5">
+              <div className="nextbars-chevron-container">
+                <div 
+                  className="d-flex justify-content-center cursor-pointer"
+                  style={{
+                    transition: 'transform 0.2s',
+                  }}
+                  onMouseEnter={(e) => e.currentTarget.style.transform = 'translateY(-3px)'}
+                  onMouseLeave={(e) => e.currentTarget.style.transform = 'translateY(0)'}
+                  onClick={() => setIsNextBarsExpanded(!isNextBarsExpanded)}
+                >
+                  <FontAwesomeIcon 
+                    icon={isNextBarsExpanded ? faChevronUp : faChevronDown} 
+                    size="lg"
+                  />
+                </div>
               </div>
-            </div>
+              
+              <div className={`mt-3 nextbars-chevron-fade ${isNextBarsExpanded ? 'show' : ''}`}>
+                <div className="dabars">
+                  <NextBars scene={scene}/>
+                </div>
+              </div>
           </div>
               </div>
             <ScenePage 

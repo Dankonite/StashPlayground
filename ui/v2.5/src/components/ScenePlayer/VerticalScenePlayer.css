@@ -315,3 +315,34 @@ bottom: 0;
 .VideoPlayer-card.is-fullscreen .cheeseReset {
   display: none;
 }
+
+/* Video Control Buttons*\
+/* Update the vertical-control-buttons class */
+.vertical-control-buttons {
+  position: absolute;
+  right: 350px;
+  top: 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  z-index: 9999;
+  opacity: 0; /* Start hidden */
+  transition: opacity 0.2s ease; /* Match VideoJS transition */
+}
+
+/* Show controls when hovering over the player */
+.VideoPlayer-card:hover .vertical-control-buttons {
+  opacity: 1;
+}
+
+/* Match VideoJS control bar transition */
+.video-js.vjs-short-form .vjs-control-bar,
+.vertical-control-buttons {
+  opacity: 0;
+  transition: opacity 0.2s ease;
+}
+
+.VideoPlayer-card:hover .vjs-control-bar,
+.VideoPlayer-card:hover .vertical-control-buttons {
+  opacity: 1;
+}

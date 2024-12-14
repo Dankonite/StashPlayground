@@ -1,149 +1,58 @@
 import React, {
   KeyboardEvent,
   useCallback,
+  useContext,
   useEffect,
+  useMemo,
   useRef,
   useState,
 } from "react";
 import videojs, { VideoJsPlayer, VideoJsPlayerOptions } from "video.js";
-import * as GQL from "src/core/generated-graphql";
-import { VIDEO_PLAYER_ID } from "./util";
-import cx from "classnames";
+import useScript from "src/hooks/useScript";
+import "videojs-contrib-dash";
+import "videojs-mobile-ui";
+import "videojs-seek-buttons";
+import { UAParser } from "ua-parser-js";
+import "./live";
+import "./PlaylistButtons";
+import "./source-selector";
+import "./persist-volume";
+import "./markers";
+import "./vtt-thumbnails";
+import "./big-buttons";
+import "./track-activity";
+import "./vrmode";
 import "./VerticalScenePlayer.css";
+import cx from "classnames";
+import {
+  useSceneSaveActivity,
+  useSceneIncrementPlayCount,
+} from "src/core/StashService";
+import * as GQL from "src/core/generated-graphql";
+import { ConfigurationContext } from "src/hooks/Config";
+import {
+  ConnectionState,
+  InteractiveContext,
+} from "src/hooks/Interactive/context";
+import { SceneInteractiveStatus } from "src/hooks/Interactive/status";
+import { languageMap } from "src/utils/caption";
+import { VIDEO_PLAYER_ID } from "./util";
 import { Button } from "react-bootstrap";
 import { Icon } from "src/components/Shared/Icon";
 import { faArrowLeft, faCamera, faLocationDot } from "@fortawesome/free-solid-svg-icons";
 
+// @ts-ignore
+import airplay from "@silvermine/videojs-airplay";
+// @ts-ignore
+import chromecast from "@silvermine/videojs-chromecast";
+import abLoopPlugin from "videojs-abloop";
 
-// Utility function for taking screenshots
-function captureVideoFrame(video: HTMLVideoElement): string {
-  const canvas = document.createElement('canvas');
-  canvas.width = video.videoWidth;
-  canvas.height = video.videoHeight;
-  const ctx = canvas.getContext('2d');
-  ctx?.drawImage(video, 0, 0, canvas.width, canvas.height);
-  return canvas.toDataURL('image/jpeg', 0.95);
-}
-
-function downloadScreenshot(dataUrl: string, filename: string) {
-  const link = document.createElement('a');
-  link.href = dataUrl;
-  link.download = filename;
-  document.body.appendChild(link);
-  link.click();
-  document.body.removeChild(link);
-}
-
-const ControlButtons: React.FC<{
-  onBack: () => void;
-  onScreenshot: () => void;
-  onNewMarker: () => void;
-}> = ({ onBack, onScreenshot, onNewMarker }) => {
-  return (
-    <div className="vertical-control-buttons">
-      <Button className="btn-clear" onClick={onBack}>
-        <Icon icon={faArrowLeft}/>
-      </Button>
-      <Button className="btn-clear" onClick={onScreenshot}>
-        <Icon icon={faCamera}/>
-      </Button>
-      <Button className="btn-clear" onClick={onNewMarker}>
-        <Icon icon={faLocationDot}/>
-      </Button>
-    </div>
-  );
-};
-
-const controlButtonStyles = `
-.vertical-control-buttons {
-  position: absolute;
-  right: 20px;
-  top: 20px;
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-  z-index: 9999;
-}
-
-.vertical-control-buttons .btn-clear {
-  background: rgba(0, 0, 0, 0.6);
-  border: none;
-  border-radius: 50%;
-  width: 40px;
-  height: 40px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  color: white;
-  padding: 0;
-  margin: 0;
-  transition: all 0.2s ease;
-  opacity: 0;
-}
-
-.VideoPlayer-card:hover .vertical-control-buttons .btn-clear {
-  opacity: 1;
-}
-
-.vertical-control-buttons .btn-clear:hover {
-  background: rgba(0, 0, 0, 0.8);
-  transform: scale(1.1);
-}
-
-.vertical-control-buttons .btn-clear svg {
-  width: 16px;
-  height: 16px;
-}
-
-/* Hide in fullscreen */
-.VideoPlayer-card.is-fullscreen .vertical-control-buttons {
-  display: none;
-}
-`;
-
-// Basic hotkey handler for essential controls
-function handleHotkeys(player: VideoJsPlayer, event: videojs.KeyboardEvent) {
-  const seekStep = (step: number) => {
-    const time = player.currentTime() + step;
-    const duration = player.duration();
-    if (time < 0) {
-      player.currentTime(0);
-    } else if (time < duration) {
-      player.currentTime(time);
-    } else {
-      player.currentTime(duration);
-    }
-  };
-
-  let seekAmount = 10;
-  if (event.shiftKey) {
-    seekAmount = 5;
-  }
-
-  switch (event.which) {
-    case 39: // right arrow
-      seekStep(seekAmount);
-      break;
-    case 37: // left arrow
-      seekStep(-seekAmount);
-      break;
-    case 32: // space
-    case 13: // enter
-      if (player.paused()) player.play();
-      else player.pause();
-      break;
-    case 77: // m
-      player.muted(!player.muted());
-      break;
-    case 70: // f
-      if (player.isFullscreen()) player.exitFullscreen();
-      else player.requestFullscreen();
-      break;
-  }
-}
+// Register videojs plugins
+airplay(videojs);
+chromecast(videojs);
+abLoopPlugin(window, videojs);
 
 // Progress bar component
-// Inside your VerticalScenePlayer.tsx
 const ProgressBar: React.FC<{
   currentTime: number;
   duration: number;
@@ -207,6 +116,87 @@ const ProgressBar: React.FC<{
   );
 };
 
+interface IControlButtonsProps {
+  // Instead of creating new handlers, we'll reference the existing buttons
+  backButton?: HTMLButtonElement | null;
+  markerButton?: HTMLButtonElement | null;
+}
+
+// Control buttons component
+const ControlButtons: React.FC<IControlButtonsProps> = ({
+  backButton,
+  markerButton
+}) => {
+  const triggerClick = (element: HTMLButtonElement | null | undefined) => {
+    element?.click();
+  };
+
+  return (
+    <div className="vertical-control-buttons">
+      <Button 
+        className="btn-clear" 
+        onClick={() => triggerClick(backButton)}
+      >
+        <Icon icon={faArrowLeft}/>
+      </Button>
+      <Button 
+        className="btn-clear" 
+        onClick={() => triggerClick(markerButton)}
+      >
+        <Icon icon={faLocationDot}/>
+      </Button>
+    </div>
+  );
+};
+// Handle hotkeys function
+function handleHotkeys(player: VideoJsPlayer, event: videojs.KeyboardEvent) {
+  function seekStep(step: number) {
+    const time = player.currentTime() + step;
+    const duration = player.duration();
+    if (time < 0) {
+      player.currentTime(0);
+    } else if (time < duration) {
+      player.currentTime(time);
+    } else {
+      player.currentTime(duration);
+    }
+  }
+
+  function seekPercent(percent: number) {
+    const duration = player.duration();
+    const time = duration * percent;
+    player.currentTime(time);
+  }
+
+  let seekFactor = 10;
+  if (event.shiftKey) {
+    seekFactor = 5;
+  } else if (event.ctrlKey || event.altKey) {
+    seekFactor = 60;
+  }
+
+  switch (event.which) {
+    case 39: // right arrow
+      seekStep(seekFactor);
+      break;
+    case 37: // left arrow
+      seekStep(-seekFactor);
+      break;
+    case 32: // space
+    case 13: // enter
+      if (player.paused()) player.play();
+      else player.pause();
+      break;
+    case 77: // m
+      player.muted(!player.muted());
+      break;
+    case 70: // f
+      if (player.isFullscreen()) player.exitFullscreen();
+      else player.requestFullscreen();
+      break;
+  }
+}
+
 interface IVerticalScenePlayerProps {
   scene: GQL.SceneDataFragment;
   play: boolean;
@@ -220,8 +210,8 @@ interface IVerticalScenePlayerProps {
   onPrevious: () => void;
   maxWidth?: number;
   maxHeight?: number;
-  onBack: () => void;
-  onNewMarker: () => void;
+  backButton?: HTMLButtonElement | null;
+  markerButton?: HTMLButtonElement | null;
 }
 
 export const VerticalScenePlayer: React.FC<IVerticalScenePlayerProps> = ({
@@ -236,46 +226,43 @@ export const VerticalScenePlayer: React.FC<IVerticalScenePlayerProps> = ({
   onPrevious,
   maxWidth = 400,
   maxHeight = 712,
-  onBack,
-  onNewMarker
+  backButton,
+  markerButton
 }) => {
+  const { configuration } = useContext(ConfigurationContext);
+  const { interactive: interactiveClient } = useContext(InteractiveContext);
+  const uiConfig = configuration?.ui;
+  const interfaceConfig = configuration?.interface;
+  const [sceneSaveActivity] = useSceneSaveActivity();
+  const [sceneIncrementPlayCount] = useSceneIncrementPlayCount();
+  const minimumPlayPercent = uiConfig?.minimumPlayPercent ?? 0;
+  const trackActivity = uiConfig?.trackActivity ?? true;
   const videoRef = useRef<HTMLDivElement>(null);
   const [player, setPlayer] = useState<VideoJsPlayer>();
   const [fullscreen, setFullscreen] = useState(false);
   const [currentTime, setCurrentTime] = useState(0);
   const [duration, setDuration] = useState(0);
+  const started = useRef(false);
+  const auto = useRef(false);
+  const sceneId = useRef<string>();
+
+  useScript(
+    "https://www.gstatic.com/cv/js/sender/v1/cast_sender.js?loadCastFramework=1",
+    uiConfig?.enableChromecast
+  );
 
   const getPlayer = useCallback(() => {
     if (!player || player.isDisposed()) return null;
     return player;
   }, [player]);
 
-  // Handle screenshot functionality
-  const handleScreenshot = () => {
-    const video = document.getElementById("VideoJsPlayer_html5_api") as HTMLVideoElement;
-    if (!video) return;
-    
-    const canvas = document.createElement('canvas');
-    canvas.width = 3840;
-    canvas.height = 2160;
-    const ctx = canvas.getContext('2d');
-    if (!ctx) return;
-    
-    ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
-    canvas.toBlob((blob) => {
-      if (blob) {
-        window.open(URL.createObjectURL(blob), '_blank');
-      }
-    });
-  };
-  
   // Initialize VideoJS player
   useEffect(() => {
     const options: VideoJsPlayerOptions = {
       id: VIDEO_PLAYER_ID,
       controls: true,
       controlBar: {
-        progressControl: false,
+        pictureInPictureToggle: false,
         volumePanel: {
           inline: false,
         },
@@ -288,15 +275,63 @@ export const VerticalScenePlayer: React.FC<IVerticalScenePlayerProps> = ({
           'fullscreenToggle'
         ]
       },
-      playbackRates: [0.5, 1, 1.5, 2],
+      html5: {
+        dash: {
+          updateSettings: [
+            {
+              streaming: {
+                buffer: {
+                  bufferTimeAtTopQuality: 30,
+                  bufferTimeAtTopQualityLongForm: 30,
+                },
+                gaps: {
+                  jumpGaps: false,
+                  jumpLargeGaps: false,
+                },
+              },
+            },
+          ],
+        },
+      },
+      nativeControlsForTouch: false,
+      playbackRates: [0.25, 0.5, 0.75, 1, 1.25, 1.5, 1.75, 2],
       preload: "auto",
       playsinline: true,
+      techOrder: ["chromecast", "html5"],
+      plugins: {
+        airPlay: {},
+        chromecast: {},
+        vttThumbnails: {
+          showTimestamp: true,
+        },
+        markers: {},
+        sourceSelector: {},
+        persistVolume: {},
+        bigButtons: {},
+        seekButtons: {
+          forward: 10,
+          back: 10,
+        },
+        skipButtons: {},
+        trackActivity: {},
+        vrMenu: {},
+        abLoopPlugin: {
+          start: 0,
+          end: false,
+          enabled: false,
+          loopIfBeforeStart: true,
+          loopIfAfterEnd: true,
+          pauseAfterLooping: false,
+          pauseBeforeLooping: false,
+          createButtons: uiConfig?.showAbLoopControls ?? false,
+        },
+      },
       userActions: {
         hotkeys: function(this: VideoJsPlayer, event) {
           handleHotkeys(this, event);
         },
       },
-      fluid: true,
+      fluid: false,
     };
 
     const videoEl = document.createElement("video-js");
@@ -312,25 +347,33 @@ export const VerticalScenePlayer: React.FC<IVerticalScenePlayerProps> = ({
       vjs.dispose();
       videoEl.remove();
       setPlayer(undefined);
+      sceneId.current = undefined;
     };
   }, []);
 
-  // Handle fullscreen changes
-  useEffect(() => {
-    const player = getPlayer();
-    if (!player) return;
-
-    const handleFullscreenChange = () => {
-      setFullscreen(player.isFullscreen());
-      const wrapper = videoRef.current;
-      if (wrapper) {
-        wrapper.classList.toggle('is-fullscreen', player.isFullscreen());
+  // Handle screenshot functionality
+  const handleScreenshot = () => {
+    const video = document.getElementById("VideoJsPlayer_html5_api") as HTMLVideoElement;
+    if (!video) return;
+    
+    const canvas = document.createElement('canvas');
+    canvas.width = video.videoWidth;
+    canvas.height = video.videoHeight;
+    const ctx = canvas.getContext('2d');
+    if (!ctx) return;
+    
+    ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+    canvas.toBlob((blob) => {
+      if (blob) {
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `screenshot-${Math.floor(Date.now() / 1000)}.jpg`;
+        a.click();
+        URL.revokeObjectURL(url);
       }
-    };
-
-    player.on("fullscreenchange", handleFullscreenChange);
-    return () => player.off("fullscreenchange", handleFullscreenChange);
-  }, [getPlayer]);
+    }, 'image/jpeg', 0.95);
+  };
 
   // Handle time updates
   useEffect(() => {
@@ -359,13 +402,52 @@ export const VerticalScenePlayer: React.FC<IVerticalScenePlayerProps> = ({
     const player = getPlayer();
     if (!player) return;
 
-    const file = scene.files[0];
-    if (!file) return;
+    // don't re-initialise the player unless the scene has changed
+    if (!scene.files[0] || scene.id === sceneId.current) return;
 
-    player.src({
-      src: scene.sceneStreams[0]?.url,
-      type: scene.sceneStreams[0]?.mime_type ?? undefined,
-    });
+    sceneId.current = scene.id;
+
+    // reset on new scene
+    player.trackActivity().reset();
+
+    const isSafari = UAParser().browser.name?.includes("Safari");
+    const file = scene.files[0];
+    const isPortrait = file.height && file.width && file.height > file.width;
+
+    const mobileUiOptions = {
+      fullscreen: {
+        enterOnRotate: true,
+        exitOnRotate: true,
+        lockOnRotate: true,
+        lockToLandscapeOnEnter: false,
+      },
+      touchControls: {
+        disabled: true,
+      },
+    };
+
+    if (!isSafari) {
+      player.mobileUi(mobileUiOptions);
+    }
+
+    const sourceSelector = player.sourceSelector();
+    sourceSelector.setSources(
+      scene.sceneStreams.map((stream) => ({
+        src: stream.url,
+        type: stream.mime_type ?? undefined,
+        label: stream.label ?? undefined,
+      }))
+    );
+
+    auto.current = autoplay || _initialTimestamp > 0;
+
+    const alwaysStartFromBeginning = uiConfig?.alwaysStartFromBeginning ?? false;
+    const resumeTime = scene.resume_time ?? 0;
+
+    let startPosition = _initialTimestamp;
+    if (!startPosition && !alwaysStartFromBeginning && file.duration > resumeTime) {
+      startPosition = resumeTime;
+    }
 
     if (scene.paths.screenshot) {
       player.poster(scene.paths.screenshot);
@@ -373,43 +455,154 @@ export const VerticalScenePlayer: React.FC<IVerticalScenePlayerProps> = ({
 
     player.load();
     
-    if (autoplay) {
-      player.play();
+    if (startPosition) {
+      player.currentTime(startPosition);
     }
-  }, [getPlayer, scene, autoplay]);
 
-  // Handle play/pause toggle
+    started.current = false;
+  }, [getPlayer, scene, autoplay, _initialTimestamp]);
+
+  // Handle activity tracking
   useEffect(() => {
     const player = getPlayer();
     if (!player) return;
-    
-    if (play && player.paused()) {
-      player.play();
-    } else if (!play && !player.paused()) {
-      player.pause();
+
+    async function saveActivity(resumeTime: number, playDuration: number) {
+      if (!scene.id) return;
+
+      await sceneSaveActivity({
+        variables:
+        {
+          id: scene.id,
+          playDuration,
+          resume_time: resumeTime,
+        },
+      });
+  }
+
+  async function incrementPlayCount() {
+    if (!scene.id) return;
+
+    await sceneIncrementPlayCount({
+      variables: {
+        id: scene.id,
+      },
+    });
+  }
+
+  const activity = player.trackActivity();
+  activity.saveActivity = saveActivity;
+  activity.incrementPlayCount = incrementPlayCount;
+  activity.minimumPlayPercent = minimumPlayPercent;
+  activity.setEnabled(trackActivity);
+}, [getPlayer, scene, trackActivity, minimumPlayPercent, sceneIncrementPlayCount, sceneSaveActivity]);
+
+// Handle fullscreen changes
+useEffect(() => {
+  const player = getPlayer();
+  if (!player) return;
+
+  const handleFullscreenChange = () => {
+    setFullscreen(player.isFullscreen());
+    const wrapper = videoRef.current;
+    if (wrapper) {
+      wrapper.classList.toggle('is-fullscreen', player.isFullscreen());
     }
-  }, [play, getPlayer]);
+  };
 
-  // Handle completion
-  useEffect(() => {
-    const player = getPlayer();
-    if (!player || !onComplete) return;
+  player.on("fullscreenchange", handleFullscreenChange);
+  return () => player.off("fullscreenchange", handleFullscreenChange);
+}, [getPlayer]);
 
-    player.on("ended", onComplete);
-    return () => player.off("ended", onComplete);
-  }, [getPlayer, onComplete]);
+// Handle play/pause toggle
+useEffect(() => {
+  const player = getPlayer();
+  if (!player) return;
+  
+  if (play && player.paused()) {
+    player.play();
+  } else if (!play && !player.paused()) {
+    player.pause();
+  }
+}, [play, getPlayer]);
 
-  const handleSeek = useCallback((time: number) => {
-    const player = getPlayer();
-    if (player) {
-      player.currentTime(time);
+// Handle completion
+useEffect(() => {
+  const player = getPlayer();
+  if (!player) return;
+
+  player.on("ended", onComplete);
+  return () => player.off("ended");
+}, [getPlayer, onComplete]);
+
+// Handle interactive features
+useEffect(() => {
+  const player = getPlayer();
+  if (!player) return;
+
+  function onplay(this: VideoJsPlayer) {
+    if (scene.interactive) {
+      interactiveClient.play(this.currentTime());
     }
-  }, [getPlayer]);
+  }
 
-  const file = scene.files[0];
-  const isPortrait = file?.height && file?.width && file.height > file.width;
+  function pause() {
+    interactiveClient.pause();
+  }
 
-// Inside your VerticalScenePlayer return statement, modify it to include the controls:
+  function seeking(this: VideoJsPlayer) {
+    if (this.paused()) return;
+    if (scene.interactive) {
+      interactiveClient.play(this.currentTime());
+    }
+  }
+
+  function timeupdate(this: VideoJsPlayer) {
+    if (this.paused()) return;
+    if (scene.interactive) {
+      interactiveClient.ensurePlaying(this.currentTime());
+    }
+    setCurrentTime(this.currentTime());
+  }
+
+  player.on("play", onplay);
+  player.on("pause", pause);
+  player.on("seeking", seeking);
+  player.on("timeupdate", timeupdate);
+
+  return () => {
+    player.off("play", onplay);
+    player.off("pause", pause);
+    player.off("seeking", seeking);
+    player.off("timeupdate", timeupdate);
+  };
+}, [getPlayer, interactiveClient, scene]);
+
+const handleSeek = useCallback((time: number) => {
+  const player = getPlayer();
+  if (player) {
+    player.currentTime(time);
+  }
+}, [getPlayer]);
+
+// Handle markers
+useEffect(() => {
+  const player = getPlayer();
+  if (!player) return;
+
+  const markers = player.markers();
+  markers.clearMarkers();
+  for (const marker of scene.scene_markers) {
+    markers.addMarker({
+      time: marker.seconds,
+      title: marker.title || `${marker.primary_tag.name}`,
+    });
+  }
+}, [getPlayer, scene]);
+
+const file = scene.files[0];
+const isPortrait = file?.height && file?.width && file.height > file.width;
+
 return (
   <div 
     className={cx("VideoPlayer-container", { portrait: isPortrait })}
@@ -422,47 +615,15 @@ return (
       <div className="video-wrapper" ref={videoRef} />
       {!fullscreen && (
         <>
+          <ControlButtons
+            backButton={backButton}
+            markerButton={markerButton}
+          />
           <ProgressBar
             currentTime={currentTime}
             duration={duration}
             onSeek={handleSeek}
           />
-          <div className="cheeseReset" style={{ opacity: 1 }}>
-            <Button 
-              className="btn-clear"
-              onClick={onBack}
-            >
-              <Icon icon={faArrowLeft}/>
-            </Button>
-            <Button
-              className="btn-clear ssbutton"
-              onClick={() => {
-                const video = document.getElementById("VideoJsPlayer_html5_api") as HTMLVideoElement;
-                if (!video) return;
-                
-                const canvas = document.createElement('canvas');
-                canvas.width = 3840;
-                canvas.height = 2160;
-                const ctx = canvas.getContext('2d');
-                if (!ctx) return;
-                
-                ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
-                canvas.toBlob((blob) => {
-                  if (blob) {
-                    window.open(URL.createObjectURL(blob), '_blank');
-                  }
-                });
-              }}
-            >
-              <Icon icon={faCamera}/>
-            </Button>
-            <Button 
-              className="btn-clear nmbutton"
-              onClick={onNewMarker}
-            >
-              <Icon icon={faLocationDot}/>
-            </Button>
-          </div>
         </>
       )}
     </div>
