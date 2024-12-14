@@ -48,9 +48,7 @@ import chromecast from "@silvermine/videojs-chromecast";
 import abLoopPlugin from "videojs-abloop";
 
 // Register videojs plugins
-airplay(videojs);
-chromecast(videojs);
-abLoopPlugin(window, videojs);
+
 
 // Progress bar component
 const ProgressBar: React.FC<{
@@ -197,6 +195,16 @@ function handleHotkeys(player: VideoJsPlayer, event: videojs.KeyboardEvent) {
   }
 }
 
+const registerPlugins = () => {
+  if (!(window as any).registeredVideoJSPlugins) {
+    // Register plugins only once
+    airplay(videojs);
+    chromecast(videojs);
+    abLoopPlugin(window, videojs);
+    (window as any).registeredVideoJSPlugins = true;
+  }
+};
+
 interface IVerticalScenePlayerProps {
   scene: GQL.SceneDataFragment;
   play: boolean;
@@ -245,6 +253,20 @@ export const VerticalScenePlayer: React.FC<IVerticalScenePlayerProps> = ({
   const started = useRef(false);
   const auto = useRef(false);
   const sceneId = useRef<string>();
+
+  const registerPlugins = () => {
+    if (!(window as any).registeredVideoJSPlugins) {
+      // Register plugins only once
+      airplay(videojs);
+      chromecast(videojs);
+      abLoopPlugin(window, videojs);
+      (window as any).registeredVideoJSPlugins = true;
+    }
+  };
+
+  useEffect(() => {
+    registerPlugins();
+  }, []);
 
   useScript(
     "https://www.gstatic.com/cv/js/sender/v1/cast_sender.js?loadCastFramework=1",
