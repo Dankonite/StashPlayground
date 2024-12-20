@@ -1,10 +1,15 @@
 import React, { useEffect, useMemo, useRef, useState } from "react";
 import { Button, ButtonGroup, OverlayTrigger, Tooltip } from "react-bootstrap";
-import { useHistory } from "react-router-dom";
+import { Link, useHistory } from "react-router-dom";
 import cx from "classnames";
 import * as GQL from "src/core/generated-graphql";
 import { Icon } from "../Shared/Icon";
-import { GalleryLink, TagLink, SceneMarkerLink } from "../Shared/TagLink";
+import {
+  GalleryLink,
+  TagLink,
+  GroupLink,
+  SceneMarkerLink,
+} from "../Shared/TagLink";
 import { HoverPopover } from "../Shared/HoverPopover";
 import { SweatDrops } from "../Shared/SweatDrops";
 import { TruncatedText } from "../Shared/TruncatedText";
@@ -12,12 +17,11 @@ import NavUtils from "src/utils/navigation";
 import TextUtils from "src/utils/text";
 import { SceneQueue } from "src/models/sceneQueue";
 import { ConfigurationContext } from "src/hooks/Config";
-import { PerformerPopoverButton } from "../Shared/PerformerPopoverButton";
+import { PerformerNameButton } from  "../Shared/PerformerNameButton";
 import { GridCard, calculateCardWidth } from "../Shared/GridCard/GridCard";
 import { RatingBanner } from "../Shared/RatingBanner";
-import { FormattedMessage, FormattedNumber } from "react-intl";
+import { FormattedNumber } from "react-intl";
 import {
-  faBox,
   faCopy,
   faFilm,
   faImages,
@@ -26,11 +30,11 @@ import {
 } from "@fortawesome/free-solid-svg-icons";
 import { objectPath, objectTitle } from "src/core/files";
 import { PreviewScrubber } from "./PreviewScrubber";
-import { PatchComponent } from "src/patch";
 import ScreenUtils from "src/utils/screen";
+import { PatchComponent } from "src/patch";
+import { TagDialog } from "./TagDialog";
+import { MarkerDialog } from "./MarkerDialog";
 import { StudioOverlay } from "../Shared/GridCard/StudioOverlay";
-import { GroupTag } from "../Groups/GroupTag";
-
 interface IScenePreviewProps {
   isPortrait: boolean;
   image?: string;
@@ -102,25 +106,7 @@ interface ISceneCardProps {
   selected?: boolean | undefined;
   zoomIndex?: number;
   onSelectedChanged?: (selected: boolean, shiftKey: boolean) => void;
-  fromGroupId?: string;
 }
-
-const Description: React.FC<{
-  sceneNumber?: number;
-}> = ({ sceneNumber }) => {
-  if (!sceneNumber) return null;
-
-  return (
-    <>
-      <hr />
-      {sceneNumber !== undefined && (
-        <span className="scene-group-scene-number">
-          <FormattedMessage id="scene" /> #{sceneNumber}
-        </span>
-      )}
-    </>
-  );
-};
 
 const SceneCardPopovers = PatchComponent(
   "SceneCard.Popovers",
@@ -129,55 +115,64 @@ const SceneCardPopovers = PatchComponent(
       () => (props.scene.files.length > 0 ? props.scene.files[0] : undefined),
       [props.scene]
     );
-
-    const sceneNumber = useMemo(() => {
-      if (!props.fromGroupId) {
-        return undefined;
-      }
-
-      const group = props.scene.groups.find(
-        (g) => g.group.id === props.fromGroupId
-      );
-      return group?.scene_index ?? undefined;
-    }, [props.fromGroupId, props.scene.groups]);
-
+    const [tagModal, setTagModal] = useState(false);
+    const [markerModal, setMarkerModal] = useState(false);
     function maybeRenderTagPopoverButton() {
       if (props.scene.tags.length <= 0) return;
 
       const popoverContent = props.scene.tags.map((tag) => (
         <TagLink key={tag.id} tag={tag} />
       ));
-
+      function onCancelTagDialog() {
+        setTagModal(false)
+      }
       return (
+      <>
+        {tagModal ? <TagDialog scene={props.scene} onCancel={onCancelTagDialog}/> : <></>}
         <HoverPopover
           className="tag-count"
           placement="bottom"
           content={popoverContent}
-        >
-          <Button className="minimal">
+          > 
+          <Button 
+            className="minimal"
+            onClick={() => setTagModal(true)}
+            >
             <Icon icon={faTag} />
             <span>{props.scene.tags.length}</span>
           </Button>
         </HoverPopover>
+      </>
       );
     }
-
+    
     function maybeRenderPerformerPopoverButton() {
       if (props.scene.performers.length <= 0) return;
-
-      return (
-        <PerformerPopoverButton
-          performers={props.scene.performers}
-          linkType="scene"
-        />
-      );
+      return null
+      // return <PerformerPopoverButton performers={props.scene.performers} />;
     }
 
     function maybeRenderGroupPopoverButton() {
       if (props.scene.groups.length <= 0) return;
 
       const popoverContent = props.scene.groups.map((sceneGroup) => (
-        <GroupTag key={sceneGroup.group.id} group={sceneGroup.group} />
+        <div className="group-tag-container row" key={sceneGroup.group.id}>
+          <Link
+            to={`/groups/${sceneGroup.group.id}`}
+            className="group-tag col m-auto zoom-2"
+          >
+            <img
+              className="image-thumbnail"
+              alt={sceneGroup.group.name ?? ""}
+              src={sceneGroup.group.front_image_path ?? ""}
+            />
+          </Link>
+          <GroupLink
+            key={sceneGroup.group.id}
+            group={sceneGroup.group}
+            className="d-block"
+          />
+        </div>
       ));
 
       return (
@@ -201,18 +196,26 @@ const SceneCardPopovers = PatchComponent(
         const markerWithScene = { ...marker, scene: { id: props.scene.id } };
         return <SceneMarkerLink key={marker.id} marker={markerWithScene} />;
       });
-
+      function onCancelMarkerDialog() {
+        setMarkerModal(false)
+      }
       return (
+        <>
+        {markerModal ? <MarkerDialog scene={props.scene} onCancel={onCancelMarkerDialog}/> : <></>}
         <HoverPopover
           className="marker-count"
           placement="bottom"
           content={popoverContent}
         >
-          <Button className="minimal">
+          <Button 
+            className="minimal"
+            onClick={() => setMarkerModal(true)}
+            >
             <Icon icon={faMapMarkerAlt} />
             <span>{props.scene.scene_markers.length}</span>
           </Button>
         </HoverPopover>
+        </>
       );
     }
 
@@ -259,11 +262,7 @@ const SceneCardPopovers = PatchComponent(
             overlay={<Tooltip id="organised-tooltip">{"Organized"}</Tooltip>}
             placement="bottom"
           >
-            <div className="organized">
-              <Button className="minimal">
-                <Icon icon={faBox} />
-              </Button>
-            </div>
+            <></>
           </OverlayTrigger>
         );
       }
@@ -297,14 +296,18 @@ const SceneCardPopovers = PatchComponent(
           props.scene.scene_markers.length > 0 ||
           props.scene?.o_counter ||
           props.scene.galleries.length > 0 ||
-          props.scene.organized ||
-          sceneNumber !== undefined)
+          props.scene.organized)
       ) {
         return (
           <>
-            <Description sceneNumber={sceneNumber} />
             <hr />
-            <ButtonGroup className="card-popovers">
+            <ButtonGroup className="card-popovers" 
+            style={{
+              position: "absolute",
+              right: 0,
+              bottom: 10.5
+            }}
+            >
               {maybeRenderTagPopoverButton()}
               {maybeRenderPerformerPopoverButton()}
               {maybeRenderGroupPopoverButton()}
@@ -320,25 +323,6 @@ const SceneCardPopovers = PatchComponent(
     }
 
     return <>{maybeRenderPopoverButtonGroup()}</>;
-  }
-);
-
-const SceneCardDetails = PatchComponent(
-  "SceneCard.Details",
-  (props: ISceneCardProps) => {
-    return (
-      <div className="scene-card__details">
-        <span className="scene-card__date">{props.scene.date}</span>
-        <span className="file-path extra-scene-info">
-          {objectPath(props.scene)}
-        </span>
-        <TruncatedText
-          className="scene-card__description"
-          text={props.scene.details}
-          lineCount={3}
-        />
-      </div>
-    );
   }
 );
 
@@ -389,13 +373,9 @@ const SceneCardImage = PatchComponent(
           ) : (
             ""
           )}
-          {(file?.duration ?? 0) >= 1 ? (
-            <span className="overlay-duration">
-              {TextUtils.secondsToTimestamp(file?.duration ?? 0)}
-            </span>
-          ) : (
-            ""
-          )}
+          {(file?.duration ?? 0) >= 1
+            ? TextUtils.secondsToTimestamp(file?.duration ?? 0)
+            : ""}
         </div>
       );
     }
@@ -454,6 +434,11 @@ export const SceneCard = PatchComponent(
       () => (props.scene.files.length > 0 ? props.scene.files[0] : undefined),
       [props.scene]
     );
+  function isPortrait() {
+    const width = file?.width ? file.width : 0;
+    const height = file?.height ? file.height : 0;
+    return height > width;
+  }
 
     function zoomIndex() {
       if (!props.compact && props.zoomIndex !== undefined) {
@@ -468,8 +453,8 @@ export const SceneCard = PatchComponent(
         return "fileless";
       }
 
-      return "";
-    }
+    return "";
+  }
 
     useEffect(() => {
       if (
@@ -510,29 +495,95 @@ export const SceneCard = PatchComponent(
         })
       : `/scenes/${props.scene.id}`;
 
-    return (
-      <GridCard
-        className={`scene-card ${zoomIndex()} ${filelessClass()}`}
-        url={sceneLink}
-        title={objectTitle(props.scene)}
-        width={cardWidth}
-        linkClassName="scene-card-link"
-        thumbnailSectionClassName="video-section"
-        resumeTime={props.scene.resume_time ?? undefined}
-        duration={file?.duration ?? undefined}
-        interactiveHeatmap={
-          props.scene.interactive_speed
-            ? props.scene.paths.interactive_heatmap ?? undefined
-            : undefined
-        }
-        image={<SceneCardImage {...props} />}
-        overlays={<SceneCardOverlays {...props} />}
-        details={<SceneCardDetails {...props} />}
-        popovers={<SceneCardPopovers {...props} />}
-        selected={props.selected}
-        selecting={props.selecting}
-        onSelectedChanged={props.onSelectedChanged}
-      />
+  function onScrubberClick(timestamp: number) {
+    const link = props.queue
+      ? props.queue.makeLink(props.scene.id, {
+          sceneIndex: props.index,
+          continue: cont,
+          start: timestamp,
+        })
+      : `/scenes/${props.scene.id}?t=${timestamp}`;
+  }
+  function maybeRenderPerformerStringPopoverButton() {
+    return <PerformerNameButton performers={props.scene.performers} />
+  }
+  function maybeRenderStudioString() {
+    const fw = {
+      fontWeight: "500",
+      fontSize: "1.1rem",
+    };
+    const mw = {
+      maxWidth: "70%"
+    }
+    return (props.scene.studio ? (
+    <>
+    <hr></hr>
+    <div className="d-inline-block mr-2" style={mw}>
+      <Link
+      to={`/studios/${props.scene.studio?.id}?sortby=date`}
+      className="studio-name col p-0"
+      >
+      {/* <Icon icon={faVideo} /> */}
+      <span style={fw}>{props.scene.studio?.name}</span>
+      </Link>
+    </div>
+    </>
+    ) : (null)
     );
   }
-);
+  return (
+    <GridCard
+      className={`scene-card ${zoomIndex()} ${filelessClass()}`}
+      url={sceneLink}
+      title={objectTitle(props.scene)}
+      width={cardWidth}
+      linkClassName="scene-card-link"
+      thumbnailSectionClassName="video-section"
+      resumeTime={props.scene.resume_time ?? undefined}
+      duration={file?.duration ?? undefined}
+      interactiveHeatmap={
+        props.scene.interactive_speed
+          ? props.scene.paths.interactive_heatmap ?? undefined
+          : undefined
+      }
+      image={<SceneCardImage {...props} />}
+      // overlays={<SceneCardOverlays {...props} />}
+      details={
+        <div className="scene-card__details" style={{
+          marginBottom: "0.75rem",
+          display: "flex",
+          height: "-webkit-fill-available",
+          flexDirection: "column"
+        }}>          
+          {maybeRenderPerformerStringPopoverButton()}
+          <div style={{
+            marginTop: "auto",
+            display: "flex",
+            flexDirection: "column",
+            justifyContent: "flex-end",
+            height: "100%"
+            }}>
+          <div className="d-flex">
+            <span className="scene-card__date">{props.scene.date}</span>
+            <div className="flex-grow-1"></div>
+            {/* <SceneCardPopovers {...props} /> */}
+          </div>
+          {maybeRenderStudioString()}
+          <span className="file-path extra-scene-info">
+          {objectPath(props.scene)}
+          </span>
+          <TruncatedText
+          className="scene-card__description"
+          text={props.scene.details}
+          lineCount={3}
+          />
+          </div>
+        </div>
+      }
+      popovers={<SceneCardPopovers {...props} />}
+      selected={props.selected}
+      selecting={props.selecting}
+      onSelectedChanged={props.onSelectedChanged}
+    />
+  );
+})

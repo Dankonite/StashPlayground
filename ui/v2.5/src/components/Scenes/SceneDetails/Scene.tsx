@@ -1247,6 +1247,13 @@ const SceneLoader: React.FC<RouteComponentProps<ISceneParams>> = ({
   );
   const backButtonRef = useRef<HTMLButtonElement>(null);
   const markerButtonRef = useRef<HTMLButtonElement>(null);
+  const [playerKey, setPlayerKey] = useState(0);
+
+  useEffect(() => {
+    if (scene?.id) {  // Check if scene exists and has an id
+      setPlayerKey(prev => prev + 1);
+    }
+  }, [scene?.id]); // Use optional chaining here too
 
   const [editMode, setEditMode] = useState(false)
   // useLayoutEffect to update before paint
@@ -1651,7 +1658,7 @@ const SceneLoader: React.FC<RouteComponentProps<ISceneParams>> = ({
             <div className="scene-player-container">
             {isVerticalVideo ? (
  <VerticalScenePlayer
- key={cheeseKey} // Add this key
+ key={`vertical-${cheeseKey}`} // Add this key
  scene={scene}
  play={play}
  autoplay={false} // Change this from false to fakeAutoPlay
@@ -1667,7 +1674,7 @@ const SceneLoader: React.FC<RouteComponentProps<ISceneParams>> = ({
 />
 ) : (
   <ScenePlayer
-    key={cheeseKey}
+  key={`regular-${cheeseKey}`}
     play={play}
     scene={scene}
     hideScrubberOverride={hideScrubber}

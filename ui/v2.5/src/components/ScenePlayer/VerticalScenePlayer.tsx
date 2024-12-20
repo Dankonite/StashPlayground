@@ -42,13 +42,24 @@ import { Icon } from "src/components/Shared/Icon";
 import { faArrowLeft, faCamera, faLocationDot } from "@fortawesome/free-solid-svg-icons";
 
 // @ts-ignore
-import airplay from "@silvermine/videojs-airplay";
-// @ts-ignore
-import chromecast from "@silvermine/videojs-chromecast";
 import abLoopPlugin from "videojs-abloop";
 
 // Register videojs plugins
+// At the top of VerticalScenePlayer.tsx
 
+let pluginsRegistered = false;
+
+const registerPlugins = () => {
+  if (pluginsRegistered) return;
+  
+  try {
+    // Removed airplay and chromecast
+    abLoopPlugin(window, videojs);
+    pluginsRegistered = true;
+  } catch (error) {
+    console.warn('Plugin registration error:', error);
+  }
+};
 
 // Progress bar component
 const ProgressBar: React.FC<{
@@ -195,16 +206,6 @@ function handleHotkeys(player: VideoJsPlayer, event: videojs.KeyboardEvent) {
   }
 }
 
-const registerPlugins = () => {
-  if (!(window as any).registeredVideoJSPlugins) {
-    // Register plugins only once
-    airplay(videojs);
-    chromecast(videojs);
-    abLoopPlugin(window, videojs);
-    (window as any).registeredVideoJSPlugins = true;
-  }
-};
-
 interface IVerticalScenePlayerProps {
   scene: GQL.SceneDataFragment;
   play: boolean;
@@ -254,15 +255,7 @@ export const VerticalScenePlayer: React.FC<IVerticalScenePlayerProps> = ({
   const auto = useRef(false);
   const sceneId = useRef<string>();
 
-  const registerPlugins = () => {
-    if (!(window as any).registeredVideoJSPlugins) {
-      // Register plugins only once
-      airplay(videojs);
-      chromecast(videojs);
-      abLoopPlugin(window, videojs);
-      (window as any).registeredVideoJSPlugins = true;
-    }
-  };
+
 
   useEffect(() => {
     registerPlugins();
@@ -277,6 +270,20 @@ export const VerticalScenePlayer: React.FC<IVerticalScenePlayerProps> = ({
     if (!player || player.isDisposed()) return null;
     return player;
   }, [player]);
+
+    // Add cleanup effect
+    useEffect(() => {
+      return () => {
+        // Cleanup when component unmounts
+        const player = getPlayer();
+        if (player) {
+          player.dispose();
+        }
+        started.current = false;
+        auto.current = false;
+        sceneId.current = undefined;
+      };
+    }, [getPlayer]);
 
   // Initialize VideoJS player
   useEffect(() => {
@@ -321,8 +328,6 @@ export const VerticalScenePlayer: React.FC<IVerticalScenePlayerProps> = ({
       playsinline: true,
       techOrder: ["chromecast", "html5"],
       plugins: {
-        airPlay: {},
-        chromecast: {},
         vttThumbnails: {
           showTimestamp: true,
         },
