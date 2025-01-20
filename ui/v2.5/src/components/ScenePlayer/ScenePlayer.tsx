@@ -46,9 +46,8 @@ import chromecast from "@silvermine/videojs-chromecast";
 import abLoopPlugin from "videojs-abloop";
 import ScreenUtils from "src/utils/screen";
 import { icon, IconDefinition } from '@fortawesome/fontawesome-svg-core';
-import { faArrowLeft, faCamera, faLocationDot } from '@fortawesome/free-solid-svg-icons';
-import { faChevronDown, faChevronUp } from '@fortawesome/free-solid-svg-icons';
-import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import { faArrowLeft, faCamera, faLocationDot, faChevronUp, faChevronDown} from '@fortawesome/free-solid-svg-icons';
+import PerformerInfoPanel from "./PerformerInfoPanel";
 
 
 // register videojs plugins
@@ -929,20 +928,11 @@ export const ScenePlayer: React.FC<IScenePlayerProps> = ({
       clickHandler: () => onMarkerClick(),
     }, controlBar.children_.length - 1);
 
-    const performerInfoButton = controlBar.addChild('CustomButton', {
-      icon: showPerformerInfo ? faChevronUp : faChevronDown,
-      class: 'performer-info-button',
-      clickHandler: () => setShowPerformerInfo(!showPerformerInfo),
-    }, controlBar.children_.length - 1);
-
-    
-  
     // Add cleanup
     return () => {
       if (backButton) controlBar.removeChild(backButton);
       if (ssButton) controlBar.removeChild(ssButton);
       if (markerButton) controlBar.removeChild(markerButton);
-      if (performerInfoButton) controlBar.removeChild(performerInfoButton);
     };
   
   }, [getPlayer, onBackClick, onScreenshotClick, onMarkerClick,showPerformerInfo]);
@@ -957,28 +947,11 @@ export const ScenePlayer: React.FC<IScenePlayerProps> = ({
       onKeyDownCapture={onKeyDown}
     >
       <div className="video-wrapper" ref={videoRef} />
-      {/* Performer Info Overlay */}
-      {showPerformerInfo && (
-      <div className="performer-info-vertical-overlay">
-        <div className="performer-info-vertical-content">
-          {scene.performers.map((performer) => (
-            <div key={performer.id} className="performer-info-vertical-item">
-              <img 
-                src={performer.image_path ?? ""} 
-                alt={performer.name} 
-                className="performer-vertical-image"
-              />
-              <div className="performer-vertical-details">
-                <h3>{performer.name}</h3>
-                {performer.gender && <p>Gender: {performer.gender}</p>}
-                {performer.measurements}
-                {/* You can add more details as needed */}
-              </div>
-            </div>
-          ))}
-        </div>
-      </div>
-    )}
+      <PerformerInfoPanel 
+      show={showPerformerInfo}
+      performers={scene.performers}
+      onToggle={() => setShowPerformerInfo(!showPerformerInfo)}
+    />
       {scene.interactive &&
         (interactiveState !== ConnectionState.Ready ||
           getPlayer()?.paused()) && <SceneInteractiveStatus />}

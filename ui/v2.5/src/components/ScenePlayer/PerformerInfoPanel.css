@@ -1,0 +1,172 @@
+.performer-info-container {
+  position: absolute;
+  top: 0;
+  right: 0;
+  height: 100%;
+  z-index: 9998;
+  display: flex;
+  align-items: stretch;
+  transform: translateX(calc(100% - 24px));
+  transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* Hover detection area */
+.performer-info-container::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  right: 0;
+  width: 50px;
+  height: 100%;
+  z-index: -1;
+}
+
+/* Only show when active */
+.performer-info-container.show {
+  transform: translateX(0);
+}
+
+.performer-info-panel {
+  position: relative;
+  width: 250px;
+  height: 100%;
+  background-color: rgba(0, 0, 0, 0.85);
+  backdrop-filter: blur(5px);
+  overflow-y: auto;
+  opacity: 0;
+  transition: opacity 0.3s ease;
+}
+
+/* Only show panel when container is expanded */
+.performer-info-container.show .performer-info-panel {
+  opacity: 1;
+}
+
+.performer-info-trigger {
+  position: absolute;
+  left: -24px;
+  top: 20px;
+  width: 24px;
+  height: 48px;
+  background-color: rgba(0, 0, 0, 0.85);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  border-radius: 4px 0 0 4px;
+  backdrop-filter: blur(5px);
+  z-index: 1;
+  opacity: 0; /* Hide by default */
+}
+
+/* Show trigger on container hover */
+.performer-info-container:hover .performer-info-trigger {
+  opacity: 1;
+}
+
+.performer-info-trigger:hover {
+  background-color: rgba(0, 0, 0, 0.95);
+}
+
+.trigger-icon {
+  color: white;
+  font-size: 0.875rem;
+  transition: transform 0.3s ease;
+}
+
+.performer-info-trigger:hover .trigger-icon {
+  transform: scale(1.2);
+}
+
+.performer-info-vertical-content {
+  padding: 1.5rem 1rem;
+  opacity: 0;
+  transform: translateX(20px);
+  transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* Show content only when expanded */
+.performer-info-container.show .performer-info-vertical-content {
+  opacity: 1;
+  transform: translateX(0);
+}
+
+.performer-info-vertical-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  margin-bottom: 2rem;
+  padding: 1rem;
+  border-radius: 8px;
+  transition: all 0.2s ease;
+}
+
+.performer-info-vertical-item:hover {
+  background-color: rgba(255, 255, 255, 0.1);
+  transform: translateX(-5px);
+}
+
+.performer-vertical-image {
+  width: 120px;
+  height: 120px;
+  border-radius: 60px;
+  object-fit: cover;
+  margin-bottom: 1rem;
+  border: 2px solid rgba(255, 255, 255, 0.2);
+  transition: all 0.3s ease;
+}
+
+.performer-vertical-image:hover {
+  transform: scale(1.05);
+  border-color: rgba(255, 255, 255, 0.4);
+}
+
+.performer-vertical-details {
+  width: 100%;
+  text-align: center;
+}
+
+.performer-vertical-details h3 {
+  color: white;
+  margin: 0.5rem 0;
+  font-size: 1.2rem;
+  font-weight: 600;
+}
+
+.performer-detail {
+  color: rgba(255, 255, 255, 0.9);
+  margin: 0.25rem 0;
+  font-size: 0.9rem;
+  opacity: 0.8;
+  transition: opacity 0.2s ease;
+}
+
+.performer-info-vertical-item:hover .performer-detail {
+  opacity: 1;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+  .performer-info-panel {
+    width: 200px;
+  }
+
+  .performer-info-vertical-content {
+    padding: 1rem 0.5rem;
+  }
+
+  .performer-vertical-image {
+    width: 90px;
+    height: 90px;
+    border-radius: 45px;
+  }
+
+  .performer-vertical-details h3 {
+    font-size: 1rem;
+  }
+
+  .performer-detail {
+    font-size: 0.8rem;
+  }
+}
