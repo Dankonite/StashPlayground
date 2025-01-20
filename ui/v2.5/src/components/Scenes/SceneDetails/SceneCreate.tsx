@@ -20,6 +20,7 @@ const SceneCreate: React.FC = () => {
   const { data, loading } = useFindScene(query.get("from_scene_id") ?? "new");
   const [loadingCoverImage, setLoadingCoverImage] = useState(false);
   const [coverImage, setCoverImage] = useState<string>();
+  const [editMode, setEditMode] = useState(true);
 
   const scene = useMemo(() => {
     if (data?.findScene) {
@@ -89,6 +90,7 @@ const SceneCreate: React.FC = () => {
           isVisible
           isNew
           onSubmit={onSave}
+          setEditMode={setEditMode}
         />
       </div>
     </div>

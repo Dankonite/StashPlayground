@@ -52,6 +52,7 @@ interface IProps {
   isVisible: boolean;
   onSubmit: (input: GQL.SceneCreateInput) => Promise<void>;
   onDelete?: () => void;
+  setEditMode: (mode: boolean) => void;
 }
 
 export const SceneEditPanel: React.FC<IProps> = ({
@@ -61,6 +62,7 @@ export const SceneEditPanel: React.FC<IProps> = ({
   isVisible,
   onSubmit,
   onDelete,
+  setEditMode,
 }) => {
   const intl = useIntl();
   const Toast = useToast();
@@ -692,7 +694,10 @@ export const SceneEditPanel: React.FC<IProps> = ({
               disabled={
                 (!isNew && !formik.dirty) || !isEqual(formik.errors, {})
               }
-              onClick={() => formik.submitForm()}
+              onClick={() => {
+                formik.submitForm()
+                setEditMode(true)
+              }}
             >
               <FormattedMessage id="actions.save" />
             </Button>
@@ -705,6 +710,12 @@ export const SceneEditPanel: React.FC<IProps> = ({
                 <FormattedMessage id="actions.delete" />
               </Button>
             )}
+              <Button
+              className="edit-button"
+              onClick={() => setEditMode(true)}
+            >
+              <FormattedMessage id="actions.cancel" />
+            </Button>
           </div>
           {!isNew && (
             <div className="ml-auto text-right d-flex">

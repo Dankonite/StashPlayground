@@ -199,6 +199,7 @@ function getMarkerTitle(marker: MarkerFragment) {
 
 interface IScenePlayerProps {
   scene: GQL.SceneDataFragment;
+  play: boolean;
   hideScrubberOverride: boolean;
   autoplay?: boolean;
   permitLoop?: boolean;
@@ -211,6 +212,7 @@ interface IScenePlayerProps {
 
 export const ScenePlayer: React.FC<IScenePlayerProps> = ({
   scene,
+  play,
   hideScrubberOverride,
   autoplay,
   permitLoop = true,
@@ -823,6 +825,18 @@ export const ScenePlayer: React.FC<IScenePlayerProps> = ({
       }
     }
   }
+  useEffect(
+    () => {
+      const player = getPlayer();
+      if (!player) return;
+      if (player.paused()) {
+        player.play();
+      } else {
+        player.pause();
+      }
+    },
+    [play],
+  );
 
   const isPortrait =
     file && file.height && file.width && file.height > file.width;
