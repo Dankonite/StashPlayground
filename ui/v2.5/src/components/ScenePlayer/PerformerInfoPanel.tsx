@@ -83,60 +83,62 @@ const PerformerInfoPanel: React.FC<IPerformerInfoPanelProps> = ({
   const renderTabContent = () => {
     switch (activeTab) {
       case 'performers':
-        return (
-          <div className="tab-content">
-            {performers.map((performer) => (
-              <div key={performer.id} className="performer-info-vertical-item">
-                {performer.image_path && (
-                  <img 
-                    src={performer.image_path} 
-                    alt={performer.name} 
-                    className="performer-vertical-image"
-                  />
-                )}
-                <div className="performer-vertical-details">
-                  <h3>{performer.name}</h3>
-                  {performer.gender && <p className="performer-detail">Gender: {performer.gender}</p>}
-                  {performer.measurements && <p className="performer-detail">{performer.measurements}</p>}
-                </div>
-              </div>
-            ))}
+  return (
+    <div className="tab-content">
+      {performers.map((performer) => (
+        <Link key={performer.id} to={`/performers/${performer.id}`}>
+          <div className="performer-info-vertical-item">
+            {performer.image_path && (
+              <img
+                src={performer.image_path}
+                alt={performer.name}
+                className="performer-vertical-image"
+              />
+            )}
+            <div className="performer-vertical-details">
+              <h3>{performer.name}</h3>
+              {performer.gender && <p className="performer-detail">Gender: {performer.gender}</p>}
+              {performer.measurements && <p className="performer-detail">{performer.measurements}</p>}
+            </div>
           </div>
+        </Link>
+      ))}
+    </div>
         );
-        case 'markers':
-          if (loading) return <div className="tab-content">Loading markers...</div>;
-          if (isEditorOpen) {
-            return (
-              <div className="tab-content">
-                <SceneMarkerForm
-                  sceneID={sceneId}
-                  marker={editingMarker}
-                  onClose={closeEditor}
-                />
-              </div>
-            );
-          }
-          return (
-            <div className="tab-content markers-content">
-              <Button className="create-marker-btn" onClick={() => onOpenEditor()}>
-                <FontAwesomeIcon icon={faPlus} />
-                <FormattedMessage id="actions.create_marker" />
-              </Button>
-              <div className="markers-container">
-                {flattenedMarkers.map((marker) => (
-                  <div key={marker.id} className="marker-preview-container">
-                    <Link
-                      to={`/scenes/${marker.scene.id}?t=${marker.seconds}`}
-                      onClick={() => setPlay(!play)}
-                      style={{
-                        display: "flex",
-                        flexDirection: "column",
-                        width: "fit-content",
-                        padding: "0 .75rem",
-                        paddingBottom: "0.25rem",
-                        textDecoration: "none",
-                        color: "#fff"
-                      }}
+      case 'markers':
+  if (loading) return <div className="tab-content">Loading markers...</div>;
+  if (isEditorOpen) {
+    return (
+      <div className="tab-content">
+        <SceneMarkerForm
+          sceneID={sceneId}
+          marker={editingMarker}
+          onClose={closeEditor}
+        />
+      </div>
+    );
+  }
+      return (
+        <div className="tab-content markers-content">
+          <Button className="create-marker-btn" onClick={() => onOpenEditor()}>
+            <FontAwesomeIcon icon={faPlus} />
+            <FormattedMessage id="actions.create_marker" />
+          </Button>
+          <div className="markers-container">
+            {flattenedMarkers.map((marker) => (
+              <div key={marker.id} className="marker-preview-container">
+                <Link
+                  to={`/scenes/${marker.scene.id}?t=${marker.seconds}&autoplay=true`}
+                  onClick={() => onClickMarker(marker)}
+                  style={{
+                    display: "flex",
+                    flexDirection: "column",
+                    width: "fit-content",
+                    padding: "0 .75rem",
+                    paddingBottom: "0.25rem",
+                    textDecoration: "none",
+                    color: "#fff"
+                  }}
                     >
                       <img
                         style={{
