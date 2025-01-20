@@ -11,6 +11,7 @@ import { DisplayMode } from "src/models/list-filter/types";
 import { useIntl } from "react-intl";
 import { Icon } from "../Shared/Icon";
 import {
+  faIdCard,
   faList,
   faSquare,
   faTags,
@@ -84,6 +85,8 @@ export const ListViewOptions: React.FC<IListViewOptionsProps> = ({
           return faSquare;
         case DisplayMode.Tagger:
           return faTags;
+        case DisplayMode.Card:
+          return faIdCard
       }
     }
     function getLabel(option: DisplayMode) {
@@ -100,6 +103,9 @@ export const ListViewOptions: React.FC<IListViewOptionsProps> = ({
           break;
         case DisplayMode.Tagger:
           displayModeId = "tagger";
+          break;
+        case DisplayMode.Card:
+          displayModeId = "Card";
           break;
       }
       return intl.formatMessage({ id: `display_mode.${displayModeId}` });

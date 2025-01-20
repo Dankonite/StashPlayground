@@ -1,0 +1,6 @@
+{
+  "dependencies": {
+    "fuse.js": "^6.6.2",
+    "react-tilt": "^1.0.2"
+  }
+}

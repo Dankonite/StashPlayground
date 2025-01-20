@@ -21,6 +21,7 @@ import { EditPerformersDialog } from "./EditPerformersDialog";
 import { cmToImperial, cmToInches, kgToLbs } from "src/utils/units";
 import TextUtils from "src/utils/text";
 import { PerformerCardGrid } from "./PerformerCardGrid";
+import { PerformerCardCard } from "./PerformerCardCard";
 import { View } from "../List/views";
 
 function getItems(result: GQL.FindPerformersQueryResult) {
@@ -267,6 +268,17 @@ export const PerformerList: React.FC<IPerformerList> = ({
             onSelectChange={onSelectChange}
             extraCriteria={extraCriteria}
           />
+        );
+      }
+      if (filter.displayMode === DisplayMode.Card) {
+        return (
+            <PerformerCardCard
+              performers={result.data.findPerformers.performers}
+              zoomIndex={filter.zoomIndex}
+              selectedIds={selectedIds}
+              onSelectChange={onSelectChange}
+              extraCriteria={extraCriteria}
+            />
         );
       }
       if (filter.displayMode === DisplayMode.List) {
