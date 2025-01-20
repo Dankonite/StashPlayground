@@ -40,7 +40,7 @@ import { VIDEO_PLAYER_ID } from "./util";
 import { Button } from "react-bootstrap";
 import { Icon } from "src/components/Shared/Icon";
 import { faArrowLeft, faCamera, faLocationDot } from "@fortawesome/free-solid-svg-icons";
-
+import PerformerInfoPanel from "./PerformerInfoPanel";
 // @ts-ignore
 import abLoopPlugin from "videojs-abloop";
 
@@ -238,6 +238,7 @@ export const VerticalScenePlayer: React.FC<IVerticalScenePlayerProps> = ({
   backButton,
   markerButton
 }) => {
+  const [showPerformerInfo, setShowPerformerInfo] = useState(false);
   const { configuration } = useContext(ConfigurationContext);
   const { interactive: interactiveClient } = useContext(InteractiveContext);
   const uiConfig = configuration?.ui;
@@ -640,6 +641,18 @@ return (
   >
     <div className={cx("VideoPlayer-card", { "is-fullscreen": fullscreen })}>
       <div className="video-wrapper" ref={videoRef} />
+      <PerformerInfoPanel 
+      show={showPerformerInfo}
+      performers={scene.performers}
+      sceneId={scene.id} // Make sure this is being passed
+      onToggle={() => setShowPerformerInfo(!showPerformerInfo)}
+      onClickMarker={(marker) => {
+        // Handle marker click - usually sets the video time
+        if (getPlayer()) {
+          getPlayer()?.currentTime(marker.seconds);
+        }
+      }}
+    />
       {!fullscreen && (
         <>
           <ControlButtons

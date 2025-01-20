@@ -950,7 +950,14 @@ export const ScenePlayer: React.FC<IScenePlayerProps> = ({
       <PerformerInfoPanel 
       show={showPerformerInfo}
       performers={scene.performers}
+      sceneId={scene.id} // Make sure this is being passed
       onToggle={() => setShowPerformerInfo(!showPerformerInfo)}
+      onClickMarker={(marker) => {
+        // Handle marker click - usually sets the video time
+        if (getPlayer()) {
+          getPlayer()?.currentTime(marker.seconds);
+        }
+      }}
     />
       {scene.interactive &&
         (interactiveState !== ConnectionState.Ready ||
