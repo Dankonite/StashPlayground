@@ -1545,6 +1545,31 @@ const SceneLoader: React.FC<RouteComponentProps<ISceneParams>> = ({
     document.body.removeChild(link);
   };
 
+  const handleBackClick = () => {
+    if (Number.parseInt(queryParams.get("t") ?? "0", 10)) {
+      history.push(`/scenes/${scene.id}/`);
+    }
+    autoplay = false;
+    console.info("autoplay false");
+    setFakeAutoPlay(false);
+    setKey(cheeseKey + 1);
+  };
+  
+  const handleScreenshotClick = () => {
+    let canvas = document.createElement('canvas');
+    let video = (document.getElementById("VideoJsPlayer_html5_api") as HTMLVideoElement);
+    canvas.width = 3840;
+    canvas.height = 2160;
+    let ctx = canvas.getContext('2d');
+    ctx!.drawImage(video, 0, 0, canvas.width, canvas.height);
+    canvas.toBlob((blob) => {window.open(URL.createObjectURL(blob!), '_blank')});
+  };
+  
+  const handleMarkerClick = () => {
+    console.log("handleMarkerClick called"); // Add debug log
+    setMarkerModal(true);
+  };
+
   const isVerticalVideo = scene.tags.some(tag => tag.name === "Vertical Video");
 
   
@@ -1673,19 +1698,23 @@ const SceneLoader: React.FC<RouteComponentProps<ISceneParams>> = ({
  markerButton={markerButtonRef.current}
 />
 ) : (
-  <ScenePlayer
+<ScenePlayer
   key={`regular-${cheeseKey}`}
-    play={play}
-    scene={scene}
-    hideScrubberOverride={hideScrubber}
-    autoplay={false}
-    permitLoop={!continuePlaylist}
-    initialTimestamp={initialTimestamp}
-    sendSetTimestamp={getSetTimestamp}
-    onComplete={onComplete}
-    onNext={() => queueNext(true)}
-    onPrevious={() => queuePrevious(true)}
-  />
+  play={play}
+  scene={scene}
+  hideScrubberOverride={hideScrubber}
+  autoplay={false}
+  permitLoop={!continuePlaylist}
+  initialTimestamp={initialTimestamp}
+  sendSetTimestamp={getSetTimestamp}
+  onComplete={onComplete}
+  onNext={() => queueNext(true)}
+  onPrevious={() => queuePrevious(true)}
+  // Add the new callback props
+  onBackClick={handleBackClick}
+  onScreenshotClick={handleScreenshotClick}
+  onMarkerClick={() => {handleMarkerClick}}
+/>
 )}
       </div>
       <div className="tsfloat">
@@ -1702,7 +1731,7 @@ const SceneLoader: React.FC<RouteComponentProps<ISceneParams>> = ({
   {!isVerticalVideo ? (
     // Original cheeseReset for normal mode
     <div className="cheeseReset" key={cheeseKey}>
-      <Button 
+      {/* <Button 
         className="btn-clear"
         onClick={() => {
           if (Number.parseInt(queryParams.get("t") ?? "0", 10)) history.push(`/scenes/${scene.id}/`)
@@ -1736,7 +1765,7 @@ const SceneLoader: React.FC<RouteComponentProps<ISceneParams>> = ({
       >
         <Icon icon={faLocationDot}/>
       </Button>
-      {markerModal ? <NewMarkerDialog onCancel={() => setMarkerModal(false)} scene={scene}/> : ""}
+      {markerModal ? <NewMarkerDialog onCancel={() => setMarkerModal(false)} scene={scene}/> : ""} */}
     </div>
   ) : (
     // New vertical mode cheeseReset
