@@ -45,12 +45,9 @@ import airplay from "@silvermine/videojs-airplay";
 import chromecast from "@silvermine/videojs-chromecast";
 import abLoopPlugin from "videojs-abloop";
 import ScreenUtils from "src/utils/screen";
-import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { 
-  faArrowLeft,
-  faCamera,
-  faLocationDot,
-} from '@fortawesome/free-solid-svg-icons';
+import { icon, IconDefinition } from '@fortawesome/fontawesome-svg-core';
+import { faArrowLeft, faCamera, faLocationDot } from '@fortawesome/free-solid-svg-icons';
+
 
 // register videojs plugins
 airplay(videojs);
@@ -867,73 +864,69 @@ export const ScenePlayer: React.FC<IScenePlayerProps> = ({
   
     interface CustomButtonOptions extends videojs.ComponentOptions {
       iconClass?: string;
+      icon?: typeof faArrowLeft | typeof faCamera | typeof faLocationDot;
       clickHandler?: () => void;
       class?: string;
       text?: string;
     }
-  
+    
+    interface CustomButtonOptions extends videojs.ComponentOptions {
+      icon?: IconDefinition;
+      clickHandler?: () => void;
+      class?: string;
+      text?: string;
+    }
+    
     class CustomButton extends videojs.getComponent('Button') {
       declare options_: CustomButtonOptions;
-  
+    
       constructor(player: any, options: CustomButtonOptions) {
         super(player, options);
         this.el().className += ' vjs-custom-button';
         if (options.class) {
           this.el().className += ` ${options.class}`;
         }
-        
+    
         const content = document.createElement('span');
-        content.style.display = 'flex';
-        content.style.alignItems = 'center';
-        content.style.justifyContent = 'center';
-        content.style.width = '100%';
-        content.style.height = '100%';
-        
-        if (options.iconClass) {
-          const icon = document.createElement('i');
-          icon.className = options.iconClass;
-          content.appendChild(icon);
+        content.className = 'vjs-icon-placeholder';
+        if (options.icon) {
+          content.innerHTML = icon(options.icon).html[0];
         }
-        
         if (options.text) {
-          const text = document.createTextNode(options.text);
-          content.appendChild(text);
+          content.appendChild(document.createTextNode(options.text));
         }
-        
+    
         this.el().innerHTML = '';
         this.el().appendChild(content);
       }
-  
+    
       handleClick() {
         if (this.options_.clickHandler) {
           this.options_.clickHandler();
         }
       }
     }
-  
     videojs.registerComponent('CustomButton', CustomButton as any);
-  
-    // Create buttons just once
+    
     const backButton = controlBar.addChild('CustomButton', {
-      iconClass: 'fa fa-arrow-left',
+      icon: faArrowLeft,
       class: 'back-button',
       clickHandler: onBackClick,
-      text: 'B'
     }, controlBar.children_.length - 1);
-  
+    
     const ssButton = controlBar.addChild('CustomButton', {
-      iconClass: 'fa fa-camera',
+      icon: faCamera,
       class: 'screenshot-button ssbutton',
       clickHandler: onScreenshotClick,
-      text: 'S'
     }, controlBar.children_.length - 1);
-  
+    
     const markerButton = controlBar.addChild('CustomButton', {
-      iconClass: 'fa fa-location-dot',
+      icon: faLocationDot,
       class: 'marker-button nmbutton',
-      clickHandler: () => onMarkerClick(),  // Make sure it's called as a function
-      text: 'M'
+      clickHandler: () => onMarkerClick(),
     }, controlBar.children_.length - 1);
+
+    
   
     // Add cleanup
     return () => {
