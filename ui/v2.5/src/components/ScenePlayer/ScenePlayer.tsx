@@ -47,6 +47,8 @@ import abLoopPlugin from "videojs-abloop";
 import ScreenUtils from "src/utils/screen";
 import { icon, IconDefinition } from '@fortawesome/fontawesome-svg-core';
 import { faArrowLeft, faCamera, faLocationDot } from '@fortawesome/free-solid-svg-icons';
+import { faChevronDown, faChevronUp } from '@fortawesome/free-solid-svg-icons';
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 
 
 // register videojs plugins
@@ -233,6 +235,7 @@ export const ScenePlayer: React.FC<IScenePlayerProps> = ({
   onScreenshotClick,
   onMarkerClick,
 }) => {
+  const [showPerformerInfo, setShowPerformerInfo] = useState(false);
   const { configuration } = useContext(ConfigurationContext);
   const interfaceConfig = configuration?.interface;
   const uiConfig = configuration?.ui;
@@ -926,6 +929,12 @@ export const ScenePlayer: React.FC<IScenePlayerProps> = ({
       clickHandler: () => onMarkerClick(),
     }, controlBar.children_.length - 1);
 
+    const performerInfoButton = controlBar.addChild('CustomButton', {
+      icon: showPerformerInfo ? faChevronUp : faChevronDown,
+      class: 'performer-info-button',
+      clickHandler: () => setShowPerformerInfo(!showPerformerInfo),
+    }, controlBar.children_.length - 1);
+
     
   
     // Add cleanup
@@ -933,9 +942,10 @@ export const ScenePlayer: React.FC<IScenePlayerProps> = ({
       if (backButton) controlBar.removeChild(backButton);
       if (ssButton) controlBar.removeChild(ssButton);
       if (markerButton) controlBar.removeChild(markerButton);
+      if (performerInfoButton) controlBar.removeChild(performerInfoButton);
     };
   
-  }, [getPlayer, onBackClick, onScreenshotClick, onMarkerClick]);
+  }, [getPlayer, onBackClick, onScreenshotClick, onMarkerClick,showPerformerInfo]);
 
 
   const isPortrait =
@@ -947,6 +957,28 @@ export const ScenePlayer: React.FC<IScenePlayerProps> = ({
       onKeyDownCapture={onKeyDown}
     >
       <div className="video-wrapper" ref={videoRef} />
+      {/* Performer Info Overlay */}
+      {showPerformerInfo && (
+      <div className="performer-info-vertical-overlay">
+        <div className="performer-info-vertical-content">
+          {scene.performers.map((performer) => (
+            <div key={performer.id} className="performer-info-vertical-item">
+              <img 
+                src={performer.image_path ?? ""} 
+                alt={performer.name} 
+                className="performer-vertical-image"
+              />
+              <div className="performer-vertical-details">
+                <h3>{performer.name}</h3>
+                {performer.gender && <p>Gender: {performer.gender}</p>}
+                {performer.measurements}
+                {/* You can add more details as needed */}
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+    )}
       {scene.interactive &&
         (interactiveState !== ConnectionState.Ready ||
           getPlayer()?.paused()) && <SceneInteractiveStatus />}
