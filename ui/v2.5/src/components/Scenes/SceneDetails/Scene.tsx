@@ -1713,7 +1713,7 @@ const SceneLoader: React.FC<RouteComponentProps<ISceneParams>> = ({
   // Add the new callback props
   onBackClick={handleBackClick}
   onScreenshotClick={handleScreenshotClick}
-  onMarkerClick={() => {handleMarkerClick}}
+  onMarkerClick={handleMarkerClick} 
 />
 )}
       </div>
@@ -1883,6 +1883,7 @@ const SceneLoader: React.FC<RouteComponentProps<ISceneParams>> = ({
             >
   
           </ScenePage>
+          {markerModal && <NewMarkerDialog onCancel={() => setMarkerModal(false)} scene={scene}/>}
           </div>
         </div>
       </div>
