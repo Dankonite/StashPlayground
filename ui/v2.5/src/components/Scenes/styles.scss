@@ -1435,12 +1435,23 @@ input[type="range"].blue-slider {
 .marker-preview-container .download-button:hover {
   background: rgba(0,0,0,0.7);
 }
-//Custom Button Styling 
+//Custom Button Styling
+.vjs-control-bar .vjs-custom-button.screenshot-button{
+  scale: 1.5;
+  bottom: 10px;
+}
+.vjs-control-bar .vjs-custom-button.marker-button{
+  scale: 1.5;
+  bottom: 10px;
+}
 .vjs-control-bar .vjs-custom-button.back-button {
   position: absolute;
   bottom: 700px;
   scale: 1.85;
   left: 10px;
   z-index: 1;
-  box-shadow: #454545;
+}
+
+.vjs-control-bar .vjs-custom-button.back-button {
+  box-shadow: #2b2a2a79;
 }
