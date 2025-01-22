@@ -20,6 +20,7 @@ import TextUtils from 'src/utils/text';
 import { Link } from 'react-router-dom';
 import { maybeRenderAltImageHead } from "src/components/Performers/PerformerCardAltHead";
 import { SceneCard } from '../Scenes/SceneCard';
+import { useHistory } from 'react-router-dom';
 
 interface IPerformerInfoPanelProps {
   show: boolean;
@@ -171,7 +172,7 @@ const PerformerInfoPanel: React.FC<IPerformerInfoPanelProps> = ({
     </div>
   );
   const renderScenes = () => {
-    const {data, loading} = GQL.useFindScenesQuery({
+    const { data, loading } = GQL.useFindScenesQuery({
       variables: {
         filter: {
           per_page: -1,
@@ -186,18 +187,27 @@ const PerformerInfoPanel: React.FC<IPerformerInfoPanelProps> = ({
       }
     });
   
+    // If loading, return loading state
     if (loading) return <div>Loading scenes...</div>;
+  
+    // If no scenes, return appropriate message
+    if (!data?.findScenes.scenes || data.findScenes.scenes.length === 0) {
+      return <div>No scenes found for these performers</div>;
+    }
+  
+    const scenesToRender = data.findScenes.scenes.slice((perfPage - 1) * 10, (perfPage * 10));
   
     return (
       <div className="tab-content">
         <div className="markers-content">
           <div className="scenes-container">
-            {data?.findScenes.scenes.slice((perfPage-1)*10, (perfPage*10)).map((sc) => (
-              <div key={sc.id} className="scene-container">
-                <SceneCard
-                  scene={sc}
-                  compact={true}
-                />
+            {scenesToRender.map((sc) => (
+              <div 
+                key={sc.id} 
+                className="scene-container"
+                onClick={() => window.location.href = `/scenes/${sc.id}?autoplay=true`}
+              >
+                <SceneCard scene={sc} compact={true} />
               </div>
             ))}
           </div>
@@ -212,12 +222,12 @@ const PerformerInfoPanel: React.FC<IPerformerInfoPanelProps> = ({
             </Button>
             
             <span className="mx-3 d-flex align-items-center">
-              {perfPage}/{Math.ceil((data?.findScenes.count ?? 0)/10)}
+              {perfPage}/{Math.ceil((data.findScenes.count ?? 0)/10)}
             </span>
             
             <Button 
-              disabled={!data || perfPage*10 >= data.findScenes.count}
-              onClick={() => data && perfPage*10 < data.findScenes.count 
+              disabled={perfPage * 10 >= data.findScenes.count}
+              onClick={() => data && perfPage * 10 < data.findScenes.count 
                 ? setPerfPage(perfPage + 1) 
                 : undefined}
               className="mx-2 btn-secondary"
@@ -226,6 +236,21 @@ const PerformerInfoPanel: React.FC<IPerformerInfoPanelProps> = ({
             </Button>
           </div>
         </div>
+      </div>
+    );
+  };
+  
+  // Create a wrapper component to handle navigation
+  const SceneCardWrapper: React.FC<{ scene: GQL.SlimSceneDataFragment }> = ({ scene }) => {
+    const history = useHistory();
+  
+    const handleSceneClick = () => {
+      history.push(`/scenes/${scene.id}`);
+    };
+  
+    return (
+      <div onClick={handleSceneClick} style={{ cursor: 'pointer' }}>
+        <SceneCard scene={scene} compact={true} />
       </div>
     );
   };

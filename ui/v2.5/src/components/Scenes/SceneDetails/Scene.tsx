@@ -1239,7 +1239,6 @@ const SceneLoader: React.FC<RouteComponentProps<ISceneParams>> = ({
   const { id } = match.params;
   const { configuration } = useContext(ConfigurationContext);
   const { data, loading, error } = useFindScene(id);
-  const [fakeAutoPlay, setFakeAutoPlay] = useState(true);
   const [scene, setScene] = useState<GQL.SceneDataFragment>();
   const file = useMemo(
     () => (scene?.files.length! > 0 ? scene?.files[0] : undefined),
@@ -1268,6 +1267,7 @@ const SceneLoader: React.FC<RouteComponentProps<ISceneParams>> = ({
     () => new URLSearchParams(location.search),
     [location.search]
   );
+
   const sceneQueue = useMemo(
     () => SceneQueue.fromQueryParameters(queryParams),
     [queryParams]
@@ -1293,16 +1293,55 @@ const SceneLoader: React.FC<RouteComponentProps<ISceneParams>> = ({
     !(configuration?.interface.showScrubber ?? true)
   );
 
-  const _setTimestamp = useRef<(value: number) => void>();
+
+  // Explicitly handle timestamp
   const initialTimestamp = useMemo(() => {
-    return Number.parseInt(queryParams.get("t") ?? "0", 10);
+    const timestampParam = queryParams.get("t");
+    return timestampParam ? Number.parseInt(timestampParam, 10) : 0;
   }, [queryParams]);
+
   const [cheeseKey, setKey] = useState(0);
   const [queueTotal, setQueueTotal] = useState(0);
   const [queueStart, setQueueStart] = useState(1);
 
-  var autoplay = queryParams.get("autoplay") === "true";
-  const [play, setPlay]= useState(false)
+   // More explicit autoplay logic
+   const [autoplay, setAutoplay] = useState(() => {
+    const autoplayParam = queryParams.get("autoplay");
+    const autoPlayOnSelected = configuration?.interface.autostartVideoOnPlaySelected ?? false;
+    
+    return autoplayParam === "true" || 
+           (autoPlayOnSelected && !queryParams.get("t"));
+  });
+
+  const [play, setPlay] = useState(autoplay);
+  const [fakeAutoPlay, setFakeAutoPlay] = useState(autoplay);
+
+  /// Reset autoplay and timestamp when scene changes
+  useEffect(() => {
+    const autoplayParam = queryParams.get("autoplay");
+    setAutoplay(autoplayParam === "true");
+    setPlay(autoplayParam === "true");
+    setFakeAutoPlay(autoplayParam === "true");
+  }, [id, queryParams]);
+
+   // Modify setTimestamp to update URL if needed
+   const _setTimestamp = useRef<(value: number) => void>();
+
+   function getSetTimestamp(fn: (value: number) => void) {
+     _setTimestamp.current = fn;
+   }
+ 
+   function setTimestamp(value: number) {
+     if (_setTimestamp.current) {
+       _setTimestamp.current(value);
+       
+       // Optionally update URL to reflect current timestamp
+       const newUrl = new URL(window.location.href);
+       newUrl.searchParams.set('t', value.toString());
+       history.replace(newUrl.toString());
+     }
+   }
+
   const autoPlayOnSelected =
     configuration?.interface.autostartVideoOnPlaySelected ?? false;
 
@@ -1313,16 +1352,6 @@ const SceneLoader: React.FC<RouteComponentProps<ISceneParams>> = ({
 
   const [isChevronDeetExpanded, setIsChevronDeetExpanded] = useState(false);
   const [isNextBarsExpanded, setIsNextBarsExpanded] = useState(true);
-
-  function getSetTimestamp(fn: (value: number) => void) {
-    _setTimestamp.current = fn;
-  }
-
-  function setTimestamp(value: number) {
-    if (_setTimestamp.current) {
-      _setTimestamp.current(value);
-    }
-  }
 
   // set up hotkeys
   useEffect(() => {
@@ -1545,16 +1574,18 @@ const SceneLoader: React.FC<RouteComponentProps<ISceneParams>> = ({
     document.body.removeChild(link);
   };
 
+
+  // Modify handleBackClick to work for both player types
   const handleBackClick = () => {
-    if (Number.parseInt(queryParams.get("t") ?? "0", 10)) {
+    if (initialTimestamp) {
       history.push(`/scenes/${scene.id}/`);
     }
-    autoplay = false;
-    console.info("autoplay false");
+    setAutoplay(false);
     setFakeAutoPlay(false);
+    setPlay(false);
     setKey(cheeseKey + 1);
   };
-  
+
   const handleScreenshotClick = () => {
     let canvas = document.createElement('canvas');
     let video = (document.getElementById("VideoJsPlayer_html5_api") as HTMLVideoElement);
@@ -1680,42 +1711,41 @@ const SceneLoader: React.FC<RouteComponentProps<ISceneParams>> = ({
         <div className={`the-vert h-fc h-100`}>
           <div className="topScene">
             {leftDeets}
-            <div className="scene-player-container">
-            {isVerticalVideo ? (
- <VerticalScenePlayer
- key={`vertical-${cheeseKey}`} // Add this key
- scene={scene}
- play={play}
- autoplay={false} // Change this from false to fakeAutoPlay
- permitLoop={!continuePlaylist}
- initialTimestamp={initialTimestamp}
- sendSetTimestamp={getSetTimestamp}
- onComplete={onComplete}
- onNext={() => queueNext(true)}
- onPrevious={() => queuePrevious(true)}
- hideScrubberOverride={hideScrubber}
- backButton={backButtonRef.current}
- markerButton={markerButtonRef.current}
-/>
-) : (
-<ScenePlayer
-  key={`regular-${cheeseKey}`}
-  play={play}
-  scene={scene}
-  hideScrubberOverride={hideScrubber}
-  autoplay={false}
-  permitLoop={!continuePlaylist}
-  initialTimestamp={initialTimestamp}
-  sendSetTimestamp={getSetTimestamp}
-  onComplete={onComplete}
-  onNext={() => queueNext(true)}
-  onPrevious={() => queuePrevious(true)}
-  // Add the new callback props
-  onBackClick={handleBackClick}
-  onScreenshotClick={handleScreenshotClick}
-  onMarkerClick={handleMarkerClick} 
-/>
-)}
+        <div className="scene-player-container">
+          {isVerticalVideo ? (
+            <VerticalScenePlayer
+              key={`vertical-${cheeseKey}`}
+              scene={scene}
+              play={play}
+              autoplay={fakeAutoPlay} // Use fakeAutoPlay here
+              permitLoop={!continuePlaylist}
+              initialTimestamp={initialTimestamp}
+              sendSetTimestamp={getSetTimestamp}
+              onComplete={onComplete}
+              onNext={() => queueNext(true)}
+              onPrevious={() => queuePrevious(true)}
+              hideScrubberOverride={hideScrubber}
+              backButton={backButtonRef.current}
+              markerButton={markerButtonRef.current}
+            />
+          ) : (
+            <ScenePlayer
+              key={`regular-${cheeseKey}`}
+              play={play}
+              scene={scene}
+              hideScrubberOverride={hideScrubber}
+              autoplay={fakeAutoPlay} // Use fakeAutoPlay here as well
+              permitLoop={!continuePlaylist}
+              initialTimestamp={initialTimestamp}
+              sendSetTimestamp={getSetTimestamp}
+              onComplete={onComplete}
+              onNext={() => queueNext(true)}
+              onPrevious={() => queuePrevious(true)}
+              onBackClick={handleBackClick}
+              onScreenshotClick={handleScreenshotClick}
+              onMarkerClick={handleMarkerClick} 
+            />
+          )}
       </div>
       <div className="tsfloat">
       <ScenePreview
@@ -1769,17 +1799,20 @@ const SceneLoader: React.FC<RouteComponentProps<ISceneParams>> = ({
     </div>
   ) : (
     // New vertical mode cheeseReset
-    <div style={{ display: 'none' }}>
-        <Button
-          ref={backButtonRef}
-          className="btn-clear"
-          onClick={() => {
-            if (Number.parseInt(queryParams.get("t") ?? "0", 10)) history.push(`/scenes/${scene.id}/`)
-            autoplay = false;
-            setFakeAutoPlay(false);
-            setPlay(false);
-            setKey(cheeseKey + 1);
-          }}
+      <div style={{ display: 'none' }}>
+      <Button
+        ref={backButtonRef}
+        className="btn-clear"
+        onClick={() => {
+          if (Number.parseInt(queryParams.get("t") ?? "0", 10)) {
+            history.push(`/scenes/${scene.id}/`);
+          }
+          // Replace direct autoplay modification with state setters
+          setAutoplay(false);
+          setFakeAutoPlay(false);
+          setPlay(false);
+          setKey(cheeseKey + 1);
+        }}
         >
           <Icon icon={faArrowLeft}/>
         </Button>
