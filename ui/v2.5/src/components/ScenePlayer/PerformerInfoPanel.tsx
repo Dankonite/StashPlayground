@@ -19,6 +19,7 @@ import { PrimaryTags } from '../Scenes/SceneDetails/PrimaryTags';
 import { SceneMarkerForm } from '../Scenes/SceneDetails/SceneMarkerForm';
 import TextUtils from 'src/utils/text';
 import { Link} from 'react-router-dom';
+import { maybeRenderAltImageHead } from "src/components/Performers/PerformerCardAltHead";
 
 
 interface IPerformerInfoPanelProps {
@@ -90,7 +91,7 @@ const PerformerInfoPanel: React.FC<IPerformerInfoPanelProps> = ({
           <div className="performer-info-vertical-item">
             {performer.image_path && (
               <img
-                src={performer.image_path}
+              src={maybeRenderAltImageHead(performer.id) ?? performer.image_path ?? ""}
                 alt={performer.name}
                 className="performer-vertical-image"
               />
