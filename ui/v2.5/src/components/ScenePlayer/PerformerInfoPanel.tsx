@@ -183,15 +183,9 @@ const PerformerInfoPanel: React.FC<IPerformerInfoPanelProps> = ({
             modifier: GQL.CriterionModifier.Includes,
             value: performers.map(p => p.id)
           },
-          // Use id filter with Excludes modifier
-          id: {
-            modifier: GQL.CriterionModifier.Excludes,
-            value: Number(sceneId)
-          }
         }
       }
-    });
-  
+    });  
     // If loading, return loading state
     if (loading) return <div>Loading scenes...</div>;
   
