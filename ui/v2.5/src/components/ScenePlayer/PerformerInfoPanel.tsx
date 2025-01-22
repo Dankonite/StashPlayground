@@ -182,6 +182,11 @@ const PerformerInfoPanel: React.FC<IPerformerInfoPanelProps> = ({
           performers: {
             modifier: GQL.CriterionModifier.Includes,
             value: performers.map(p => p.id)
+          },
+          // Use id filter with Excludes modifier
+          id: {
+            modifier: GQL.CriterionModifier.Excludes,
+            value: Number(sceneId)
           }
         }
       }
@@ -192,7 +197,7 @@ const PerformerInfoPanel: React.FC<IPerformerInfoPanelProps> = ({
   
     // If no scenes, return appropriate message
     if (!data?.findScenes.scenes || data.findScenes.scenes.length === 0) {
-      return <div>No scenes found for these performers</div>;
+      return <div>No other scenes found for these performers</div>;
     }
   
     const scenesToRender = data.findScenes.scenes.slice((perfPage - 1) * 10, (perfPage * 10));
