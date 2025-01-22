@@ -13,14 +13,12 @@ import {
 } from '@fortawesome/free-solid-svg-icons';
 import { Button } from "react-bootstrap";
 import { FormattedMessage } from "react-intl";
-import Mousetrap from "mousetrap";
 import { MarkerWallPanel } from "src/components/Wall/WallPanel";
 import { PrimaryTags } from '../Scenes/SceneDetails/PrimaryTags';
 import { SceneMarkerForm } from '../Scenes/SceneDetails/SceneMarkerForm';
 import TextUtils from 'src/utils/text';
-import { Link} from 'react-router-dom';
+import { Link } from 'react-router-dom';
 import { maybeRenderAltImageHead } from "src/components/Performers/PerformerCardAltHead";
-
 
 interface IPerformerInfoPanelProps {
   show: boolean;
@@ -41,9 +39,22 @@ const PerformerInfoPanel: React.FC<IPerformerInfoPanelProps> = ({
   onToggle,
   onClickMarker
 }) => {
+  // Keep ALL hooks at the top level
   const [activeTab, setActiveTab] = useState<TabType>('performers');
   const [isEditorOpen, setIsEditorOpen] = useState<boolean>(false);
   const [editingMarker, setEditingMarker] = useState<GQL.SceneMarkerDataFragment>();
+  const [play, setPlay] = useState(false);
+
+  // GraphQL query hook
+  const { data, loading } = GQL.useFindSceneMarkerTagsQuery({
+    variables: { id: sceneId },
+    skip: activeTab !== 'markers' // Only fetch when markers tab is active
+  });
+
+  // Process markers data
+  const sceneMarkers = data?.sceneMarkerTags?.map((tag) => tag.scene_markers) ?? [];
+  const flattenedMarkers = sceneMarkers.reduce((prev, current) => [...prev, ...current], []);
+
   const handleDownload = (url: string) => {
     const link = document.createElement('a');
     link.style.display = 'none';
@@ -54,19 +65,6 @@ const PerformerInfoPanel: React.FC<IPerformerInfoPanelProps> = ({
     document.body.removeChild(link);
   };
 
-  const { data, loading } = GQL.useFindSceneMarkerTagsQuery({
-    variables: { id: sceneId },
-  });
-
-  // Set up hotkeys for markers
-  useEffect(() => {
-    if (!show || activeTab !== 'markers') return;
-    Mousetrap.bind("n", () => onOpenEditor());
-    return () => {
-      Mousetrap.unbind("n");
-    };
-  }, [show, activeTab]);
-
   function onOpenEditor(marker?: GQL.SceneMarkerDataFragment) {
     setIsEditorOpen(true);
     setEditingMarker(marker ?? undefined);
@@ -76,22 +74,15 @@ const PerformerInfoPanel: React.FC<IPerformerInfoPanelProps> = ({
     setEditingMarker(undefined);
     setIsEditorOpen(false);
   };
-   const [play, setPlay]= useState(false)
 
-  const sceneMarkers = data?.sceneMarkerTags.map((tag) => tag.scene_markers) ?? [];
-  const flattenedMarkers = sceneMarkers.reduce((prev, current) => [...prev, ...current], []);
-
-  const renderTabContent = () => {
-    switch (activeTab) {
-      case 'performers':
-  return (
+  const renderPerformers = () => (
     <div className="tab-content">
       {performers.map((performer) => (
         <Link key={performer.id} to={`/performers/${performer.id}`}>
           <div className="performer-info-vertical-item">
             {performer.image_path && (
               <img
-              src={maybeRenderAltImageHead(performer.id) ?? performer.image_path ?? ""}
+                src={maybeRenderAltImageHead(performer.id) ?? performer.image_path ?? ""}
                 alt={performer.name}
                 className="performer-vertical-image"
               />
@@ -105,22 +96,20 @@ const PerformerInfoPanel: React.FC<IPerformerInfoPanelProps> = ({
         </Link>
       ))}
     </div>
-        );
-      case 'markers':
-  if (loading) return <div className="tab-content">Loading markers...</div>;
-  if (isEditorOpen) {
-    return (
-      <div className="tab-content">
+  );
+
+  const renderMarkers = () => (
+    <div className="tab-content">
+      {loading ? (
+        <div>Loading markers...</div>
+      ) : isEditorOpen ? (
         <SceneMarkerForm
           sceneID={sceneId}
           marker={editingMarker}
           onClose={closeEditor}
         />
-      </div>
-    );
-  }
-      return (
-        <div className="tab-content markers-content">
+      ) : (
+        <div className="markers-content">
           <Button className="create-marker-btn" onClick={() => onOpenEditor()}>
             <FontAwesomeIcon icon={faPlus} />
             <FormattedMessage id="actions.create_marker" />
@@ -140,49 +129,67 @@ const PerformerInfoPanel: React.FC<IPerformerInfoPanelProps> = ({
                     textDecoration: "none",
                     color: "#fff"
                   }}
-                    >
-                      <img
-                        style={{
-                          height: "100px",
-                          aspectRatio: "auto",
-                          borderRadius: ".75rem",
-                        }}
-                        src={marker.preview}
-                        alt=""
-                      />
-                      <span style={{ textAlign: "center" }}>
-                        {marker.title ? marker.title : marker.primary_tag.name}
-                      </span>
-                      <span style={{ textAlign: "center" }}>
-                        {TextUtils.secondsToTimestamp(marker.seconds)}
-                      </span>
-                    </Link>
-                    <button
-                      className="download-button"
-                      onClick={() => handleDownload(marker.stream)}
-                    >
-                      <svg
-                        xmlns="http://www.w3.org/2000/svg"
-                        viewBox="0 0 24 24"
-                        fill="currentColor"
-                        width="16"
-                        height="16"
-                      >
-                        <path d="M12 16c.55 0 1-.45 1-1V5c0-.55-.45-1-1-1s-1 .45-1 1v10c0 .55.45 1 1 1zm4.29-2.29c.39-.39.39-1.02 0-1.41-.39-.39-1.02-.39-1.41 0L13 14.17V9c0-.55-.45-1-1-1s-1 .45-1 1v5.17l-1.88-1.88c-.39-.39-1.02-.39-1.41 0-.39.39-.39 1.02 0 1.41l3.29 3.29c.19.19.44.29.71.29s.51-.1.71-.29l3.29-3.29zM18 18H6c-.55 0-1 .45-1 1s.45 1 1 1h12c.55 0 1-.45 1-1s-.45-1-1-1z"/>
-                      </svg>
-                    </button>
-                  </div>
-                ))}
+                >
+                  <img
+                    style={{
+                      height: "100px",
+                      aspectRatio: "auto",
+                      borderRadius: ".75rem",
+                    }}
+                    src={marker.preview}
+                    alt=""
+                  />
+                  <span style={{ textAlign: "center" }}>
+                    {marker.title ? marker.title : marker.primary_tag.name}
+                  </span>
+                  <span style={{ textAlign: "center" }}>
+                    {TextUtils.secondsToTimestamp(marker.seconds)}
+                  </span>
+                </Link>
+                <button
+                  className="download-button"
+                  onClick={() => handleDownload(marker.stream)}
+                >
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    viewBox="0 0 24 24"
+                    fill="currentColor"
+                    width="16"
+                    height="16"
+                  >
+                    <path d="M12 16c.55 0 1-.45 1-1V5c0-.55-.45-1-1-1s-1 .45-1 1v10c0 .55.45 1 1 1zm4.29-2.29c.39-.39.39-1.02 0-1.41-.39-.39-1.02-.39-1.41 0L13 14.17V9c0-.55-.45-1-1-1s-1 .45-1 1v5.17l-1.88-1.88c-.39-.39-1.02-.39-1.41 0-.39.39-.39 1.02 0 1.41l3.29 3.29c.19.19.44.29.71.29s.51-.1.71-.29l3.29-3.29zM18 18H6c-.55 0-1 .45-1 1s.45 1 1 1h12c.55 0 1-.45 1-1s-.45-1-1-1z"/>
+                  </svg>
+                </button>
               </div>
-            </div>
-          );
-      case 'scenes':
-        return (
-          <div className="tab-content">
-            <div className="info-placeholder">Scenes section coming soon</div>
+            ))}
           </div>
-        );
-    }
+        </div>
+      )}
+    </div>
+  );
+
+  const renderScenes = () => (
+    <div className="tab-content">
+      <div className="info-placeholder">Scenes section coming soon</div>
+    </div>
+  );
+
+  // Instead of switching, render all tabs and control visibility with CSS
+  const renderTabs = () => {
+    return (
+      <div className="info-panel-content">
+        {/* Always render all tabs, but only show the active one */}
+        <div style={{ display: activeTab === 'performers' ? 'block' : 'none' }}>
+          {renderPerformers()}
+        </div>
+        <div style={{ display: activeTab === 'markers' ? 'block' : 'none' }}>
+          {renderMarkers()}
+        </div>
+        <div style={{ display: activeTab === 'scenes' ? 'block' : 'none' }}>
+          {renderScenes()}
+        </div>
+      </div>
+    );
   };
 
   return (
@@ -224,9 +231,7 @@ const PerformerInfoPanel: React.FC<IPerformerInfoPanelProps> = ({
           </button>
         </div>
 
-        <div className="info-panel-content">
-          {renderTabContent()}
-        </div>
+        {renderTabs()}
       </div>
     </div>
   );
