@@ -19,6 +19,7 @@ import { SceneMarkerForm } from '../Scenes/SceneDetails/SceneMarkerForm';
 import TextUtils from 'src/utils/text';
 import { Link } from 'react-router-dom';
 import { maybeRenderAltImageHead } from "src/components/Performers/PerformerCardAltHead";
+import { SceneCard } from '../Scenes/SceneCard';
 
 interface IPerformerInfoPanelProps {
   show: boolean;
@@ -44,6 +45,8 @@ const PerformerInfoPanel: React.FC<IPerformerInfoPanelProps> = ({
   const [isEditorOpen, setIsEditorOpen] = useState<boolean>(false);
   const [editingMarker, setEditingMarker] = useState<GQL.SceneMarkerDataFragment>();
   const [play, setPlay] = useState(false);
+  const [perfPage, setPerfPage] = useState(1);
+  const [randomSeed] = useState(Math.round(Math.random()*10000000));
 
   // GraphQL query hook
   const { data, loading } = GQL.useFindSceneMarkerTagsQuery({
@@ -167,12 +170,65 @@ const PerformerInfoPanel: React.FC<IPerformerInfoPanelProps> = ({
       )}
     </div>
   );
-
-  const renderScenes = () => (
-    <div className="tab-content">
-      <div className="info-placeholder">Scenes section coming soon</div>
-    </div>
-  );
+  const renderScenes = () => {
+    const {data, loading} = GQL.useFindScenesQuery({
+      variables: {
+        filter: {
+          per_page: -1,
+          sort: "random_" + randomSeed,
+        },
+        scene_filter: {
+          performers: {
+            modifier: GQL.CriterionModifier.Includes,
+            value: performers.map(p => p.id)
+          }
+        }
+      }
+    });
+  
+    if (loading) return <div>Loading scenes...</div>;
+  
+    return (
+      <div className="tab-content">
+        <div className="markers-content">
+          <div className="scenes-container">
+            {data?.findScenes.scenes.slice((perfPage-1)*10, (perfPage*10)).map((sc) => (
+              <div key={sc.id} className="scene-container">
+                <SceneCard
+                  scene={sc}
+                  compact={true}
+                />
+              </div>
+            ))}
+          </div>
+          
+          <div className="d-flex justify-content-center mt-3">
+            <Button 
+              disabled={perfPage === 1}
+              onClick={() => perfPage !== 1 ? setPerfPage(perfPage - 1) : undefined}
+              className="mx-2 btn-secondary"
+            >
+              <FontAwesomeIcon icon={faChevronLeft} />
+            </Button>
+            
+            <span className="mx-3 d-flex align-items-center">
+              {perfPage}/{Math.ceil((data?.findScenes.count ?? 0)/10)}
+            </span>
+            
+            <Button 
+              disabled={!data || perfPage*10 >= data.findScenes.count}
+              onClick={() => data && perfPage*10 < data.findScenes.count 
+                ? setPerfPage(perfPage + 1) 
+                : undefined}
+              className="mx-2 btn-secondary"
+            >
+              <FontAwesomeIcon icon={faChevronRight} />
+            </Button>
+          </div>
+        </div>
+      </div>
+    );
+  };
 
   // Instead of switching, render all tabs and control visibility with CSS
   const renderTabs = () => {
