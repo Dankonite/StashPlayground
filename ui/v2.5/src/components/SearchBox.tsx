@@ -62,12 +62,15 @@ export const SearchBox: React.FC<SBProps> = () => {
         const initialSearchTerm = queryParams.get('q') || '';
         const [searchTerm, setSearchTerm] = useState(initialSearchTerm);
     }
+    type MatchTypeEnum = 'title' | 'performer';
 
     type SearchResult = { 
-        ShortName: string; 
+        ShortName: string;
+        MatchType?: MatchTypeEnum;
         TypeData: GQL.SlimSceneDataFragment | GQL.PerformerDataFragment | 
-                 GQL.TagDataFragment | GQL.StudioDataFragment |
-                 GQL.SlimGalleryDataFragment | GQL.GroupDataFragment | GQL.SceneMarkerDataFragment | GQL.SlimImageDataFragment
+                  GQL.TagDataFragment | GQL.StudioDataFragment |
+                  GQL.SlimGalleryDataFragment | GQL.GroupDataFragment | 
+                  GQL.SceneMarkerDataFragment | GQL.SlimImageDataFragment
     };
 
 
@@ -312,12 +315,15 @@ export const SearchBox: React.FC<SBProps> = () => {
             setSearchResults([]);
             return;
         }
-
+    
         let results: SearchResult[] = [];
-
+    
         if (sceneData?.findScenes.scenes) {
             results.push(...sceneData.findScenes.scenes.map(scene => ({
                 ShortName: scene.title!,
+                MatchType: scene.performers?.some(p => 
+                    p.name.toLowerCase().includes(searchTerm.toLowerCase())
+                ) ? 'performer' as MatchTypeEnum : 'title' as MatchTypeEnum,
                 TypeData: scene
             })));
         }
@@ -378,8 +384,8 @@ export const SearchBox: React.FC<SBProps> = () => {
             threshold: 0.4,
         });
 
-        setSearchResults(fuse.search(searchTerm).map(({ item }) => item));
-    }, [searchTerm, sceneData, perfData, tagData, studioData, galleryData, movieData, imageData, markerData]);
+         setSearchResults(fuse.search(searchTerm).map(({ item }) => item));
+}, [searchTerm, sceneData, perfData]);
 
     function goToFirstResult() {
         if (searchResults.length === 0) return;
