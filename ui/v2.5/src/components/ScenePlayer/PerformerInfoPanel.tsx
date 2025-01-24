@@ -19,6 +19,8 @@ import { SceneMarkerForm } from '../Scenes/SceneDetails/SceneMarkerForm';
 import TextUtils from 'src/utils/text';
 import { Link } from 'react-router-dom';
 import { maybeRenderAltImageHead } from "src/components/Performers/PerformerCardAltHead";
+import { maybeRenderAltImageA} from '../Performers/PerformerCardAltA';
+import { maybeRenderAltImageB } from '../Performers/PerformerCardAltB';
 import { SceneCard } from '../Scenes/SceneCard';
 import { useHistory } from 'react-router-dom';
 
@@ -79,28 +81,64 @@ const PerformerInfoPanel: React.FC<IPerformerInfoPanelProps> = ({
     setIsEditorOpen(false);
   };
 
-  const renderPerformers = () => (
-    <div className="tab-content">
-      {performers.map((performer) => (
-        <Link key={performer.id} to={`/performers/${performer.id}`}>
-          <div className="performer-info-vertical-item">
-            {performer.image_path && (
-              <img
-                src={maybeRenderAltImageHead(performer.id) ?? performer.image_path ?? ""}
-                alt={performer.name}
-                className="performer-vertical-image"
-              />
-            )}
-            <div className="performer-vertical-details">
-              <h3>{performer.name}</h3>
-              {performer.gender && <p className="performer-detail">Gender: {performer.gender}</p>}
-              {performer.measurements && <p className="performer-detail">{performer.measurements}</p>}
-            </div>
-          </div>
-        </Link>
-      ))}
-    </div>
-  );
+  const renderPerformers = () => {
+    const imageCache = new Map<string, { altA: string | null, altB: string | null }>();
+    
+    performers.forEach(performer => {
+      if (!imageCache.has(performer.id)) {
+        const altImageA = maybeRenderAltImageA(performer.id);
+        const altImageB = maybeRenderAltImageB(performer.id);
+        imageCache.set(performer.id, { altA: altImageA, altB: altImageB });
+      }
+    });
+  
+    return (
+      <div className="tab-content">
+        {performers.map((performer) => {
+          const images = imageCache.get(performer.id);
+          
+          return (
+            <Link key={performer.id} to={`/performers/${performer.id}`}>
+              <div className="performer-info-vertical-item">
+                <div className="performer-image-group">
+                  {images?.altB && (
+                    <div className="performer-small-image performer-small-image-left">
+                      <img
+                        src={images.altB ?? undefined}
+                        alt={performer.name}
+                      />
+                    </div>
+                  )}
+                  
+                  <div className="performer-main-image">
+                    <img
+                      src={maybeRenderAltImageHead(performer.id) ?? performer.image_path ?? ""}
+                      alt={performer.name}
+                    />
+                  </div>
+                  
+                  {images?.altA && (
+                    <div className="performer-small-image performer-small-image-right">
+                      <img
+                        src={images.altA ?? undefined}
+                        alt={performer.name}
+                      />
+                    </div>
+                  )}
+                </div>
+  
+                <div className="performer-vertical-details">
+                  <h3>{performer.name}</h3>
+                  {performer.gender && <p className="performer-detail">Gender: {performer.gender}</p>}
+                  {performer.measurements && <p className="performer-detail">{performer.measurements}</p>}
+                </div>
+              </div>
+            </Link>
+          );
+        })}
+      </div>
+    );
+  };
 
   const renderMarkers = () => (
     <div className="tab-content">

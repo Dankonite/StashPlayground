@@ -1,3 +1,5 @@
+
+
 .performer-info-container {
   position: absolute;
   top: 0;
@@ -258,4 +260,58 @@
   .tab-button span {
     display: none;
   }
+}
+/* Performer back images */
+.performer-image-group {
+  position: relative;
+  width: 100%;
+  height: 120px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  margin-bottom: 1rem;
+}
+
+.performer-main-image {
+  width: 120px;
+  height: 120px;
+  position: relative;
+  z-index: 2;
+}
+
+.performer-main-image img {
+  width: 100%;
+  height: 100%;
+  border-radius: 50%;
+  object-fit: cover;
+}
+
+.performer-small-image {
+  width: 80px;
+  height: 80px;
+  position: absolute;
+  z-index: 1;
+  opacity: 0;
+  transition: opacity 0.3s ease;
+}
+
+.performer-info-vertical-item:hover .performer-small-image {
+  opacity: 0.7;
+}
+
+.performer-small-image img {
+  width: 100%;
+  height: 100%;
+  border-radius: 50%;
+  object-fit: cover;
+}
+
+.performer-small-image-left {
+  left: 20%;
+  transform: translateX(-50%);
+}
+
+.performer-small-image-right {
+  right: 20%;
+  transform: translateX(50%);
 }
