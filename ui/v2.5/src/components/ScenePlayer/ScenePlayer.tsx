@@ -711,16 +711,17 @@ export const ScenePlayer: React.FC<IScenePlayerProps> = ({
   useEffect(() => {
     const player = getPlayer();
     if (!player) return;
-
+  
     const markers = player.markers();
     markers.clearMarkers();
     for (const marker of scene.scene_markers) {
       markers.addMarker({
         title: getMarkerTitle(marker),
-        time: marker.seconds,
+        seconds: marker.seconds,
+        end_seconds: marker.end_seconds ?? null
       });
     }
-
+  
     if (scene.paths.screenshot) {
       player.poster(scene.paths.screenshot);
     } else {
