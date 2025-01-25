@@ -20,6 +20,7 @@ class MarkersPlugin extends videojs.getPlugin("plugin") {
   }[] = [];
   private markerTooltip: HTMLElement | null = null;
   private defaultTooltip: HTMLElement | null = null;
+  private activeRanges: HTMLDivElement[] = [];
 
   constructor(player: VideoJsPlayer, options?: IMarkersOptions) {
     super(player);
@@ -70,6 +71,14 @@ class MarkersPlugin extends videojs.getPlugin("plugin") {
     );
   }
 
+  private resetActiveRanges() {
+    this.activeRanges.forEach(range => {
+      range.classList.remove('active-marker-range');
+      range.style.transform = 'translateY(-10px)';
+    });
+    this.activeRanges = [];
+  }
+
   addMarker(marker: IMarker) {
     const duration = this.player.duration();
     const markerSet: {
@@ -116,7 +125,36 @@ class MarkersPlugin extends videojs.getPlugin("plugin") {
     }
 
     // Add event listeners to dot
-    markerSet.dot.addEventListener("click", () => this.player.currentTime(marker.seconds));
+    markerSet.dot.addEventListener("click", () => {
+      // Go to marker time
+      this.player.currentTime(marker.seconds);
+
+      // Reset previous active ranges
+      this.resetActiveRanges();
+
+      // Activate current marker range
+      if (markerSet.range) {
+        markerSet.range.classList.add('active-marker-range');
+        markerSet.range.style.transform = 'translateY(-10px)';
+        this.activeRanges.push(markerSet.range);
+      }
+
+      // Find and activate overlapping markers' ranges
+      this.markerDivs.forEach((otherMarkerSet, index) => {
+        const otherMarker = this.markers[index];
+        
+        if (
+          otherMarker !== marker && 
+          otherMarker.end_seconds && 
+          this.isMarkerOverlapping(marker, otherMarker) && 
+          otherMarkerSet.range
+        ) {
+          otherMarkerSet.range.classList.add('active-marker-range');
+          otherMarkerSet.range.style.transform = `translateY(-${10 + (this.activeRanges.length * 10)}px)`;
+          this.activeRanges.push(otherMarkerSet.range);
+        }
+      });
+    });
 
     markerSet.dot.addEventListener("mouseenter", () => {
       this.showMarkerTooltip(marker.title);
