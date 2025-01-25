@@ -12,7 +12,10 @@ interface IMarkersOptions {
 
 class MarkersPlugin extends videojs.getPlugin("plugin") {
   private markers: IMarker[] = [];
-  private markerDivs: HTMLDivElement[] = [];
+  private markerDivs: {
+    dot: HTMLDivElement;
+    range?: HTMLDivElement;
+  }[] = [];
   private markerTooltip: HTMLElement | null = null;
   private defaultTooltip: HTMLElement | null = null;
 
@@ -55,57 +58,119 @@ class MarkersPlugin extends videojs.getPlugin("plugin") {
     return `${minutes}:${remainingSeconds.toString().padStart(2, '0')}`;
   }
 
-  addMarker(marker: IMarker) {
-    const markerDiv = videojs.dom.createEl("div") as HTMLDivElement;
-    const duration = this.player.duration();
+  private isMarkerOverlapping(outerMarker: IMarker, innerMarker: IMarker): boolean {
+    if (!outerMarker.end_seconds || !innerMarker.end_seconds) return false;
+    
+    return (
+      // Start of inner marker is within outer marker range
+      (innerMarker.seconds >= outerMarker.seconds && innerMarker.seconds <= outerMarker.end_seconds) ||
+      // End of inner marker is within outer marker range
+      (innerMarker.end_seconds >= outerMarker.seconds && innerMarker.end_seconds <= outerMarker.end_seconds) ||
+      // Inner marker completely contains outer marker
+      (innerMarker.seconds <= outerMarker.seconds && innerMarker.end_seconds >= outerMarker.end_seconds)
+    );
+  }
 
+  addMarker(marker: IMarker) {
+    const duration = this.player.duration();
+    const markerSet: {
+      dot: HTMLDivElement;
+      range?: HTMLDivElement;
+      containedRanges?: HTMLDivElement[];
+    } = {
+      dot: videojs.dom.createEl("div") as HTMLDivElement,
+      containedRanges: []
+    };
+
+    // Create dot marker
+    markerSet.dot.className = "vjs-marker-dot";
+    if (duration) {
+      markerSet.dot.style.left = `calc(${(marker.seconds / duration) * 100}% - 3px)`;
+    }
+
+    // Create range marker if end_seconds exists
     if (marker.end_seconds) {
-      // Range marker
-      markerDiv.className = "vjs-marker-range";
+      const rangeDiv = videojs.dom.createEl("div") as HTMLDivElement;
+      rangeDiv.className = "vjs-marker-range";
+      
       if (duration) {
         const startPercent = (marker.seconds / duration) * 100;
         const endPercent = (marker.end_seconds / duration) * 100;
         const width = endPercent - startPercent;
         
-        markerDiv.style.left = `${startPercent}%`;
-        markerDiv.style.width = `${width}%`;
+        rangeDiv.style.left = `${startPercent}%`;
+        rangeDiv.style.width = `${width}%`;
+        rangeDiv.style.display = 'none'; // Initially hidden
         
         const startLabel = videojs.dom.createEl("span") as HTMLSpanElement;
         startLabel.className = "marker-time-label start";
         startLabel.textContent = this.formatTime(marker.seconds);
-        markerDiv.appendChild(startLabel);
+        rangeDiv.appendChild(startLabel);
 
         const endLabel = videojs.dom.createEl("span") as HTMLSpanElement;
         endLabel.className = "marker-time-label end";
         endLabel.textContent = this.formatTime(marker.end_seconds);
-        markerDiv.appendChild(endLabel);
-      }
-    } else {
-      // Point marker
-      markerDiv.className = "vjs-marker";
-      if (duration) {
-        markerDiv.style.left = `calc(${(marker.seconds / duration) * 100}% - 3px)`;
+        rangeDiv.appendChild(endLabel);
+
+        markerSet.range = rangeDiv;
       }
     }
 
-    markerDiv.style.visibility = "visible";
-    markerDiv.addEventListener("click", () => this.player.currentTime(marker.seconds));
+    // Add event listeners to dot
+    markerSet.dot.addEventListener("click", () => this.player.currentTime(marker.seconds));
 
-    markerDiv.addEventListener("mouseenter", () => {
+    markerSet.dot.addEventListener("mouseenter", () => {
       this.showMarkerTooltip(marker.title);
-      markerDiv.toggleAttribute("marker-tooltip-shown", true);
+      markerSet.dot.toggleAttribute("marker-tooltip-shown", true);
+      
+      // Show own range marker
+      if (markerSet.range) {
+        markerSet.range.style.display = 'block';
+      }
+
+      // Find and show overlapping markers' ranges
+      this.markerDivs.forEach((otherMarkerSet, index) => {
+        const otherMarker = this.markers[index];
+        
+        if (
+          otherMarker !== marker && 
+          otherMarker.end_seconds && 
+          this.isMarkerOverlapping(marker, otherMarker) && 
+          otherMarkerSet.range
+        ) {
+          otherMarkerSet.range.classList.add('contained-marker-range');
+          otherMarkerSet.range.style.display = 'block';
+          markerSet.containedRanges?.push(otherMarkerSet.range);
+        }
+      });
     });
     
-    markerDiv.addEventListener("mouseout", () => {
+    markerSet.dot.addEventListener("mouseout", () => {
       this.hideMarkerTooltip();
-      markerDiv.toggleAttribute("marker-tooltip-shown", false);
+      markerSet.dot.toggleAttribute("marker-tooltip-shown", false);
+      
+      // Hide own range marker
+      if (markerSet.range) {
+        markerSet.range.style.display = 'none';
+      }
+
+      // Hide contained markers' ranges
+      if (markerSet.containedRanges) {
+        markerSet.containedRanges.forEach(rangeDiv => {
+          rangeDiv.classList.remove('contained-marker-range');
+          rangeDiv.style.display = 'none';
+        });
+      }
     });
 
     const seekBar = this.player.el().querySelector(".vjs-progress-holder");
-    if (seekBar) seekBar.appendChild(markerDiv);
+    if (seekBar) {
+      seekBar.appendChild(markerSet.dot);
+      if (markerSet.range) seekBar.appendChild(markerSet.range);
+    }
 
     this.markers.push(marker);
-    this.markerDivs.push(markerDiv);
+    this.markerDivs.push(markerSet);
   }
 
   addMarkers(markers: IMarker[]) {
@@ -117,11 +182,14 @@ class MarkersPlugin extends videojs.getPlugin("plugin") {
     if (i === -1) return;
 
     this.markers.splice(i, 1);
-    const div = this.markerDivs.splice(i, 1)[0];
-    if (div.hasAttribute("marker-tooltip-shown")) {
+    const markerSet = this.markerDivs.splice(i, 1)[0];
+    
+    if (markerSet.dot.hasAttribute("marker-tooltip-shown")) {
       this.hideMarkerTooltip();
     }
-    div.remove();
+    
+    markerSet.dot.remove();
+    if (markerSet.range) markerSet.range.remove();
   }
 
   removeMarkers(markers: IMarker[]) {
@@ -135,24 +203,40 @@ class MarkersPlugin extends videojs.getPlugin("plugin") {
 
 const style = document.createElement('style');
 style.textContent = `
-.vjs-marker {
+.vjs-marker-dot {
   position: absolute;
-  background-color: #fde047;
-  width: 6px;
-  height: 100%;
-  opacity: 0.8;
+  background-color: #10b981;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
   cursor: pointer;
-  z-index: 1;
+  z-index: 2;
+  transform: translate(-50%, -50%);
+  top: 50%;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.2);
   transition: transform 0.2s ease;
+}
+
+.vjs-marker-dot:hover {
+  transform: translate(-50%, -50%) scale(1.2);
 }
 
 .vjs-marker-range {
   position: absolute;
-  background-color: rgba(255, 255, 255, 0.3);
+  background-color: rgba(255, 255, 255, 0.4);
   height: 100%;
   cursor: pointer;
   z-index: 1;
+  border-radius: 2px;
+  transform: translateY(-10px);
+  box-shadow: 0 4px 6px rgba(0,0,0,0.1);
   transition: transform 0.2s ease;
+}
+
+.contained-marker-range {
+  background-color: rgba(59, 130, 246, 0.4);
+  z-index: 0;
+  transform: translateY(-15px);
 }
 
 .marker-time-label {
@@ -165,14 +249,7 @@ style.textContent = `
   transform: translateY(-100%);
   white-space: nowrap;
   z-index: 2;
-}
-
-.vjs-marker:hover,
-.vjs-marker-range:hover {
-  transform: translateY(-20px);
-  z-index: 2;
-}
-`;
+}`;
 document.head.appendChild(style);
 
 videojs.registerPlugin("markers", MarkersPlugin);
