@@ -58,6 +58,7 @@ export const SceneMarkerForm: React.FC<ISceneMarkerForm> = ({
       ),
     primary_tag_id: yup.string().required(),
     tag_ids: yup.array(yup.string().required()).defined(),
+    color: yup.string().required() // Add color field
   });
 
   // useMemo to only run getPlayerPosition when the input marker actually changes
@@ -68,6 +69,7 @@ export const SceneMarkerForm: React.FC<ISceneMarkerForm> = ({
       end_seconds: marker?.end_seconds ?? null,
       primary_tag_id: marker?.primary_tag.id ?? "",
       tag_ids: marker?.tags.map((tag) => tag.id) ?? [],
+      color: marker?.color ?? "#FFFFFF" // Default white
     }),
     [marker]
   );
@@ -93,6 +95,26 @@ export const SceneMarkerForm: React.FC<ISceneMarkerForm> = ({
       items.map((item) => item.id)
     );
   }
+
+  // Add new render function for color picker
+function renderColorField() {
+  const title = intl.formatMessage({ id: "color" });
+  const control = (
+    <div className="d-flex align-items-center">
+      <Form.Control
+        type="color"
+        value={formik.values.color}
+        onChange={(e) => formik.setFieldValue("color", e.target.value)}
+        className="mr-2"
+      />
+      <Form.Control.Feedback type="invalid">
+        {formik.errors.color}
+      </Form.Control.Feedback>
+    </div>
+  );
+
+  return renderField("color", title, control);
+}
 
   useEffect(() => {
     setPrimaryTag(
@@ -264,8 +286,15 @@ export const SceneMarkerForm: React.FC<ISceneMarkerForm> = ({
   return (
     <Form noValidate onSubmit={formik.handleSubmit}>
       <div className="form-container px-3">
-        {renderTitleField()}
-        {renderPrimaryTagField()}
+      {renderTitleField()}
+      <div className="d-flex">
+        <div className="flex-grow-1">
+          {renderPrimaryTagField()}
+        </div>
+        <div className="ml-3" style={{ width: '120px' }}>
+          {renderColorField()}
+        </div>
+      </div>
         {renderTimeField()}
         {renderEndTimeField()}
         {renderTagsField()}

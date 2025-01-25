@@ -2,7 +2,9 @@ import videojs, { VideoJsPlayer } from "video.js";
 
 interface IMarker {
   title: string;
-  time: number;
+  seconds: number;
+  end_seconds?: number | null;
+  color?: string;
 }
 
 interface IMarkersOptions {
@@ -19,86 +21,82 @@ class MarkersPlugin extends videojs.getPlugin("plugin") {
     super(player);
 
     player.ready(() => {
-      // create marker tooltip
       const tooltip = videojs.dom.createEl("div") as HTMLElement;
       tooltip.className = "vjs-marker-tooltip";
       tooltip.style.visibility = "hidden";
 
-      const parent = player
-        .el()
-        .querySelector(".vjs-progress-holder .vjs-mouse-display");
+      const parent = player.el().querySelector(".vjs-progress-holder .vjs-mouse-display");
       if (parent) parent.appendChild(tooltip);
       this.markerTooltip = tooltip;
 
-      // save default tooltip
-      this.defaultTooltip = player
-        .el()
-        .querySelector<HTMLElement>(
-          ".vjs-progress-holder .vjs-mouse-display .vjs-time-tooltip"
-        );
+      this.defaultTooltip = player.el().querySelector<HTMLElement>(
+        ".vjs-progress-holder .vjs-mouse-display .vjs-time-tooltip"
+      );
 
       options?.markers?.forEach(this.addMarker, this);
-    });
-
-    player.on("loadedmetadata", () => {
-      const seekBar = player.el().querySelector(".vjs-progress-holder");
-      const duration = this.player.duration();
-
-      for (let i = 0; i < this.markers.length; i++) {
-        const marker = this.markers[i];
-        const markerDiv = this.markerDivs[i];
-
-        if (duration) {
-          // marker is 6px wide - adjust by 3px to align to center not left side
-          markerDiv.style.left = `calc(${
-            (marker.time / duration) * 100
-          }% - 3px)`;
-          markerDiv.style.visibility = "visible";
-        }
-        if (seekBar) seekBar.appendChild(markerDiv);
-      }
     });
   }
 
   private showMarkerTooltip(title: string) {
     if (!this.markerTooltip) return;
-
     this.markerTooltip.innerText = title;
     this.markerTooltip.style.right = `${-this.markerTooltip.clientWidth / 2}px`;
     this.markerTooltip.style.visibility = "visible";
-
-    // hide default tooltip
     if (this.defaultTooltip) this.defaultTooltip.style.visibility = "hidden";
   }
 
   private hideMarkerTooltip() {
     if (this.markerTooltip) this.markerTooltip.style.visibility = "hidden";
-
-    // show default tooltip
     if (this.defaultTooltip) this.defaultTooltip.style.visibility = "visible";
+  }
+
+  private formatTime(seconds: number): string {
+    const minutes = Math.floor(seconds / 60);
+    const remainingSeconds = Math.floor(seconds % 60);
+    return `${minutes}:${remainingSeconds.toString().padStart(2, '0')}`;
   }
 
   addMarker(marker: IMarker) {
     const markerDiv = videojs.dom.createEl("div") as HTMLDivElement;
-    markerDiv.className = "vjs-marker";
-
     const duration = this.player.duration();
-    if (duration) {
-      // marker is 6px wide - adjust by 3px to align to center not left side
-      markerDiv.style.left = `calc(${(marker.time / duration) * 100}% - 3px)`;
-      markerDiv.style.visibility = "visible";
+  
+    if (marker.end_seconds) {
+      markerDiv.className = "vjs-marker-range";
+      if (duration) {
+        const startPercent = (marker.seconds / duration) * 100;
+        const endPercent = (marker.end_seconds / duration) * 100;
+        const width = endPercent - startPercent;
+        
+        markerDiv.style.left = `${startPercent}%`;
+        markerDiv.style.width = `${width}%`;
+        markerDiv.style.backgroundColor = marker.color ?? 'rgba(255, 255, 255, 0.3)';
+        
+        const startLabel = videojs.dom.createEl("span") as HTMLSpanElement;
+        startLabel.className = "marker-time-label start";
+        startLabel.textContent = this.formatTime(marker.seconds);
+        markerDiv.appendChild(startLabel);
+  
+        const endLabel = videojs.dom.createEl("span") as HTMLSpanElement;
+        endLabel.className = "marker-time-label end";
+        endLabel.textContent = this.formatTime(marker.end_seconds);
+        markerDiv.appendChild(endLabel);
+      }
+    } else {
+      markerDiv.className = "vjs-marker";
+      if (duration) {
+        markerDiv.style.left = `calc(${(marker.seconds / duration) * 100}% - 3px)`;
+        markerDiv.style.backgroundColor = marker.color ?? '#FFFFFF';
+      }
     }
 
-    // bind click event to seek to marker time
-    markerDiv.addEventListener("click", () =>
-      this.player.currentTime(marker.time)
-    );
+    markerDiv.style.visibility = "visible";
+    markerDiv.addEventListener("click", () => this.player.currentTime(marker.seconds));
 
-    // show/hide tooltip on hover
     markerDiv.addEventListener("mouseenter", () => {
       this.showMarkerTooltip(marker.title);
       markerDiv.toggleAttribute("marker-tooltip-shown", true);
     });
+    
     markerDiv.addEventListener("mouseout", () => {
       this.hideMarkerTooltip();
       markerDiv.toggleAttribute("marker-tooltip-shown", false);
@@ -120,7 +118,6 @@ class MarkersPlugin extends videojs.getPlugin("plugin") {
     if (i === -1) return;
 
     this.markers.splice(i, 1);
-
     const div = this.markerDivs.splice(i, 1)[0];
     if (div.hasAttribute("marker-tooltip-shown")) {
       this.hideMarkerTooltip();
@@ -137,10 +134,64 @@ class MarkersPlugin extends videojs.getPlugin("plugin") {
   }
 }
 
-// Register the plugin with video.js.
+const style = document.createElement('style');
+style.textContent = `
+.vjs-marker {
+  position: absolute;
+  background-color: #fff;
+  width: 6px;
+  height: 100%;
+  opacity: 0.8;
+  cursor: pointer;
+}
+
+.vjs-marker-range {
+  position: absolute;
+  background-color: rgb(245, 43, 43);
+  height: 100%;
+  cursor: pointer;
+}
+
+.marker-time-label {
+  position: absolute;
+  font-size: 10px;
+  color: white;
+  background: rgba(0, 0, 0, 0.7);
+  padding: 2px 4px;
+  border-radius: 2px;
+  transform: translateY(-100%);
+  white-space: nowrap;
+  z-index: 2;
+}
+
+.marker-time-label.start {
+  left: 0;
+}
+
+.marker-time-label.end {
+  right: 0;
+}
+
+.vjs-marker-tooltip {
+  background-color: rgba(255, 255, 255, 0.8);
+  border-radius: 0.3em;
+  color: #000;
+  float: right;
+  font-family: Arial, Helvetica, sans-serif;
+  font-size: 0.6em;
+  padding: 6px 8px 8px 8px;
+  pointer-events: none;
+  position: absolute;
+  top: -3.4em;
+  visibility: hidden;
+  white-space: nowrap;
+  z-index: 1;
+}
+`;
+document.head.appendChild(style);
+
 videojs.registerPlugin("markers", MarkersPlugin);
 
-/* eslint-disable @typescript-eslint/naming-convention */
 declare module "video.js" {
   interface VideoJsPlayer {
     markers: () => MarkersPlugin;

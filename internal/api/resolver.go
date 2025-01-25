@@ -130,6 +130,10 @@ type savedFilterResolver struct{ *Resolver }
 type pluginResolver struct{ *Resolver }
 type configResultResolver struct{ *Resolver }
 
+func (r *sceneMarkerResolver) Color(ctx context.Context, obj *models.SceneMarker) *string {
+	return obj.Color
+}
+
 func (r *Resolver) withTxn(ctx context.Context, fn func(ctx context.Context) error) error {
 	return r.repository.WithTxn(ctx, fn)
 }

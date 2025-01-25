@@ -1,0 +1,1 @@
+ALTER TABLE scene_markers ADD COLUMN color TEXT DEFAULT '#FFFFFF';

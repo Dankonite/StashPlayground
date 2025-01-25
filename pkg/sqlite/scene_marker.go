@@ -25,14 +25,15 @@ GROUP BY scene_markers.id
 `
 
 type sceneMarkerRow struct {
-	ID           int        `db:"id" goqu:"skipinsert"`
-	Title        string     `db:"title"` // TODO: make db schema (and gql schema) nullable
-	Seconds      float64    `db:"seconds"`
-	PrimaryTagID int        `db:"primary_tag_id"`
-	SceneID      int        `db:"scene_id"`
-	CreatedAt    Timestamp  `db:"created_at"`
-	UpdatedAt    Timestamp  `db:"updated_at"`
-	EndSeconds   null.Float `db:"end_seconds"`
+	ID           int         `db:"id" goqu:"skipinsert"`
+	Title        string      `db:"title"` // TODO: make db schema (and gql schema) nullable
+	Seconds      float64     `db:"seconds"`
+	PrimaryTagID int         `db:"primary_tag_id"`
+	SceneID      int         `db:"scene_id"`
+	CreatedAt    Timestamp   `db:"created_at"`
+	UpdatedAt    Timestamp   `db:"updated_at"`
+	EndSeconds   null.Float  `db:"end_seconds"`
+	Color        null.String `db:"color"` // Add colors
 }
 
 func (r *sceneMarkerRow) fromSceneMarker(o models.SceneMarker) {
@@ -46,6 +47,7 @@ func (r *sceneMarkerRow) fromSceneMarker(o models.SceneMarker) {
 	r.SceneID = o.SceneID
 	r.CreatedAt = Timestamp{Timestamp: o.CreatedAt}
 	r.UpdatedAt = Timestamp{Timestamp: o.UpdatedAt}
+	r.Color = null.StringFromPtr(o.Color)
 }
 
 func (r *sceneMarkerRow) resolve() *models.SceneMarker {
@@ -58,6 +60,7 @@ func (r *sceneMarkerRow) resolve() *models.SceneMarker {
 		SceneID:      r.SceneID,
 		CreatedAt:    r.CreatedAt.Timestamp,
 		UpdatedAt:    r.UpdatedAt.Timestamp,
+		Color:        r.Color.Ptr(),
 	}
 
 	return ret
@@ -80,6 +83,9 @@ func (r *sceneMarkerRowRecord) fromPartial(o models.SceneMarkerPartial) {
 	r.setInt("scene_id", o.SceneID)
 	r.setTimestamp("created_at", o.CreatedAt)
 	r.setTimestamp("updated_at", o.UpdatedAt)
+	if o.Color.Set {
+		r.set("color", o.Color.Value)
+	}
 }
 
 type sceneMarkerRepositoryType struct {

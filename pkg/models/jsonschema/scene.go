@@ -9,6 +9,7 @@ import (
 	"github.com/stashapp/stash/pkg/fsutil"
 	"github.com/stashapp/stash/pkg/models"
 	"github.com/stashapp/stash/pkg/models/json"
+	"gopkg.in/guregu/null.v4"
 )
 
 type SceneMarker struct {
@@ -18,6 +19,7 @@ type SceneMarker struct {
 	Tags       []string      `json:"tags,omitempty"`
 	CreatedAt  json.JSONTime `json:"created_at,omitempty"`
 	UpdatedAt  json.JSONTime `json:"updated_at,omitempty"`
+	Color      null.String   `json:"color_at,omitempty"`
 }
 
 type SceneFile struct {

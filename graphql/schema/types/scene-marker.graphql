@@ -10,6 +10,7 @@ type SceneMarker {
   tags: [Tag!]!
   created_at: Time!
   updated_at: Time!
+  color: String
 
   "The path to stream this marker"
   stream: String! # Resolver
@@ -28,6 +29,7 @@ input SceneMarkerCreateInput {
   scene_id: ID!
   primary_tag_id: ID!
   tag_ids: [ID!]
+  color: String
 }
 
 input SceneMarkerUpdateInput {
@@ -40,6 +42,7 @@ input SceneMarkerUpdateInput {
   scene_id: ID
   primary_tag_id: ID
   tag_ids: [ID!]
+  color: String
 }
 
 type FindSceneMarkersResultType {

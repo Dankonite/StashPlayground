@@ -708,25 +708,28 @@ export const ScenePlayer: React.FC<IScenePlayerProps> = ({
     _initialTimestamp,
   ]);
 
-  useEffect(() => {
-    const player = getPlayer();
-    if (!player) return;
+// Inside ScenePlayer component
+useEffect(() => {
+  const player = getPlayer();
+  if (!player) return;
 
-    const markers = player.markers();
-    markers.clearMarkers();
-    for (const marker of scene.scene_markers) {
-      markers.addMarker({
-        title: getMarkerTitle(marker),
-        time: marker.seconds,
-      });
-    }
+  const markers = player.markers();
+  markers.clearMarkers();
+  for (const marker of scene.scene_markers) {
+    markers.addMarker({
+      title: getMarkerTitle(marker),
+      seconds: marker.seconds,
+      end_seconds: marker.end_seconds ?? null,
+      color: marker.color ?? '#FFFFFF'
+    });
+  }
 
-    if (scene.paths.screenshot) {
-      player.poster(scene.paths.screenshot);
-    } else {
-      player.poster("");
-    }
-  }, [getPlayer, scene]);
+  if (scene.paths.screenshot) {
+    player.poster(scene.paths.screenshot);
+  } else {
+    player.poster("");
+  }
+}, [getPlayer, scene]);
 
   useEffect(() => {
     const player = getPlayer();

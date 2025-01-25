@@ -13,6 +13,7 @@ type SceneMarker struct {
 	SceneID      int       `json:"scene_id"`
 	CreatedAt    time.Time `json:"created_at"`
 	UpdatedAt    time.Time `json:"updated_at"`
+	Color        *string   `json:"color"`
 }
 
 func NewSceneMarker() SceneMarker {
@@ -21,6 +22,11 @@ func NewSceneMarker() SceneMarker {
 		CreatedAt: currentTime,
 		UpdatedAt: currentTime,
 	}
+}
+
+type NullString struct {
+	Set   bool
+	Value *string
 }
 
 // SceneMarkerPartial represents part of a SceneMarker object.
@@ -33,6 +39,7 @@ type SceneMarkerPartial struct {
 	SceneID      OptionalInt
 	CreatedAt    OptionalTime
 	UpdatedAt    OptionalTime
+	Color        NullString
 }
 
 func NewSceneMarkerPartial() SceneMarkerPartial {
