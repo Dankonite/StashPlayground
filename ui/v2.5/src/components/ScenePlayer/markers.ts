@@ -1,4 +1,5 @@
 import videojs, { VideoJsPlayer } from "video.js";
+import "./markers.css";
 
 interface IMarker {
   title: string;
@@ -15,6 +16,7 @@ class MarkersPlugin extends videojs.getPlugin("plugin") {
   private markerDivs: {
     dot: HTMLDivElement;
     range?: HTMLDivElement;
+    containedRanges?: HTMLDivElement[];
   }[] = [];
   private markerTooltip: HTMLElement | null = null;
   private defaultTooltip: HTMLElement | null = null;
@@ -62,11 +64,8 @@ class MarkersPlugin extends videojs.getPlugin("plugin") {
     if (!outerMarker.end_seconds || !innerMarker.end_seconds) return false;
     
     return (
-      // Start of inner marker is within outer marker range
       (innerMarker.seconds >= outerMarker.seconds && innerMarker.seconds <= outerMarker.end_seconds) ||
-      // End of inner marker is within outer marker range
       (innerMarker.end_seconds >= outerMarker.seconds && innerMarker.end_seconds <= outerMarker.end_seconds) ||
-      // Inner marker completely contains outer marker
       (innerMarker.seconds <= outerMarker.seconds && innerMarker.end_seconds >= outerMarker.end_seconds)
     );
   }
@@ -200,57 +199,6 @@ class MarkersPlugin extends videojs.getPlugin("plugin") {
     this.removeMarkers([...this.markers]);
   }
 }
-
-const style = document.createElement('style');
-style.textContent = `
-.vjs-marker-dot {
-  position: absolute;
-  background-color: #10b981;
-  width: 8px;
-  height: 8px;
-  border-radius: 50%;
-  cursor: pointer;
-  z-index: 2;
-  transform: translate(-50%, -50%);
-  top: 50%;
-  box-shadow: 0 2px 4px rgba(0,0,0,0.2);
-  transition: transform 0.2s ease;
-}
-
-.vjs-marker-dot:hover {
-  transform: translate(-50%, -50%) scale(1.2);
-}
-
-.vjs-marker-range {
-  position: absolute;
-  background-color: rgba(255, 255, 255, 0.4);
-  height: 100%;
-  cursor: pointer;
-  z-index: 1;
-  border-radius: 2px;
-  transform: translateY(-10px);
-  box-shadow: 0 4px 6px rgba(0,0,0,0.1);
-  transition: transform 0.2s ease;
-}
-
-.contained-marker-range {
-  background-color: rgba(59, 130, 246, 0.4);
-  z-index: 0;
-  transform: translateY(-15px);
-}
-
-.marker-time-label {
-  position: absolute;
-  font-size: 10px;
-  color: white;
-  background: rgba(0, 0, 0, 0.7);
-  padding: 2px 4px;
-  border-radius: 2px;
-  transform: translateY(-100%);
-  white-space: nowrap;
-  z-index: 2;
-}`;
-document.head.appendChild(style);
 
 videojs.registerPlugin("markers", MarkersPlugin);
 
