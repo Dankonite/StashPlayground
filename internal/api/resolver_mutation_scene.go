@@ -711,6 +711,14 @@ func (r *mutationResolver) SceneMarkerUpdate(ctx context.Context, input SceneMar
 	updatedMarker.Seconds = translator.optionalFloat64(input.Seconds, "seconds")
 	updatedMarker.EndSeconds = translator.optionalFloat64(input.EndSeconds, "end_seconds")
 	updatedMarker.SceneID, err = translator.optionalIntFromString(input.SceneID, "scene_id")
+	if input.Color != nil {
+		updatedMarker.Color = models.NullString{
+			Set:   true,
+			Value: input.Color,
+		}
+	} else {
+		updatedMarker.Color = models.NullString{}
+	}
 	if err != nil {
 		return nil, fmt.Errorf("converting scene id: %w", err)
 	}
