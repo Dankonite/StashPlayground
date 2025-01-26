@@ -13,6 +13,7 @@ type Tag struct {
 	Name          string        `json:"name,omitempty"`
 	Description   string        `json:"description,omitempty"`
 	Favorite      bool          `json:"favorite,omitempty"`
+	Color         string        `json:"color,omitempty"`
 	Aliases       []string      `json:"aliases,omitempty"`
 	Image         string        `json:"image,omitempty"`
 	Parents       []string      `json:"parents,omitempty"`

@@ -25,6 +25,7 @@ const (
 const (
 	tagName     = "testTag"
 	description = "description"
+	color       = "#ffffff"
 )
 
 var (
@@ -38,6 +39,7 @@ func createTag(id int) models.Tag {
 		ID:            id,
 		Name:          tagName,
 		Favorite:      true,
+		Color:         color,
 		Description:   description,
 		IgnoreAutoTag: autoTagIgnored,
 		CreatedAt:     createTime,
@@ -49,6 +51,7 @@ func createJSONTag(aliases []string, image string, parents []string) *jsonschema
 	return &jsonschema.Tag{
 		Name:          tagName,
 		Favorite:      true,
+		Color:         color,
 		Description:   description,
 		Aliases:       aliases,
 		IgnoreAutoTag: autoTagIgnored,

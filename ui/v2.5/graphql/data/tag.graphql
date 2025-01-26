@@ -5,6 +5,7 @@ fragment TagData on Tag {
   aliases
   ignore_auto_tag
   favorite
+  color
   image_path
   scene_count
   scene_count_all: scene_count(depth: -1)
@@ -34,6 +35,7 @@ fragment SelectTagData on Tag {
   id
   name
   favorite
+  color
   description
   aliases
   image_path

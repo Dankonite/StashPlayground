@@ -34,6 +34,7 @@ type tagRow struct {
 	ID            int         `db:"id" goqu:"skipinsert"`
 	Name          null.String `db:"name"` // TODO: make schema non-nullable
 	Favorite      bool        `db:"favorite"`
+	Color         string      `db:"color"`
 	Description   zero.String `db:"description"`
 	IgnoreAutoTag bool        `db:"ignore_auto_tag"`
 	CreatedAt     Timestamp   `db:"created_at"`
@@ -47,6 +48,7 @@ func (r *tagRow) fromTag(o models.Tag) {
 	r.ID = o.ID
 	r.Name = null.StringFrom(o.Name)
 	r.Favorite = o.Favorite
+	r.Color = o.Color
 	r.Description = zero.StringFrom(o.Description)
 	r.IgnoreAutoTag = o.IgnoreAutoTag
 	r.CreatedAt = Timestamp{Timestamp: o.CreatedAt}
@@ -58,6 +60,7 @@ func (r *tagRow) resolve() *models.Tag {
 		ID:            r.ID,
 		Name:          r.Name.String,
 		Favorite:      r.Favorite,
+		Color:         r.Color,
 		Description:   r.Description.String,
 		IgnoreAutoTag: r.IgnoreAutoTag,
 		CreatedAt:     r.CreatedAt.Timestamp,
@@ -89,6 +92,7 @@ func (r *tagRowRecord) fromPartial(o models.TagPartial) {
 	r.setString("name", o.Name)
 	r.setNullString("description", o.Description)
 	r.setBool("favorite", o.Favorite)
+	r.setString("color", o.Color)
 	r.setBool("ignore_auto_tag", o.IgnoreAutoTag)
 	r.setTimestamp("created_at", o.CreatedAt)
 	r.setTimestamp("updated_at", o.UpdatedAt)

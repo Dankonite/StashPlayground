@@ -9,6 +9,7 @@ type Tag struct {
 	ID            int       `json:"id"`
 	Name          string    `json:"name"`
 	Favorite      bool      `json:"favorite"`
+	Color         string    `json:"color"`
 	Description   string    `json:"description"`
 	IgnoreAutoTag bool      `json:"ignore_auto_tag"`
 	CreatedAt     time.Time `json:"created_at"`
@@ -49,6 +50,7 @@ type TagPartial struct {
 	Name          OptionalString
 	Description   OptionalString
 	Favorite      OptionalBool
+	Color         OptionalString
 	IgnoreAutoTag OptionalBool
 	CreatedAt     OptionalTime
 	UpdatedAt     OptionalTime

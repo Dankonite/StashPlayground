@@ -254,6 +254,7 @@ export const TagCard: React.FC<IProps> = ({
       return (
         <>
           <hr />
+          <span>{tag.color}</span>
           <ButtonGroup className="card-popovers">
             {maybeRenderScenesPopoverButton()}
             {maybeRenderImagesPopoverButton()}

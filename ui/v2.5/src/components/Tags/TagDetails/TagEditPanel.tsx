@@ -48,6 +48,7 @@ export const TagEditPanel: React.FC<ITagEditPanel> = ({
     name: yup.string().required(),
     aliases: yupUniqueAliases(intl, "name"),
     description: yup.string().ensure(),
+    color: yup.string().ensure(),
     parent_ids: yup.array(yup.string().required()).defined(),
     child_ids: yup.array(yup.string().required()).defined(),
     ignore_auto_tag: yup.boolean().defined(),
@@ -58,6 +59,7 @@ export const TagEditPanel: React.FC<ITagEditPanel> = ({
     name: tag?.name ?? "",
     aliases: tag?.aliases ?? [],
     description: tag?.description ?? "",
+    color: tag?.color ?? "",
     parent_ids: (tag?.parents ?? []).map((t) => t.id),
     child_ids: (tag?.children ?? []).map((t) => t.id),
     ignore_auto_tag: tag?.ignore_auto_tag ?? false,
@@ -205,6 +207,7 @@ export const TagEditPanel: React.FC<ITagEditPanel> = ({
         {renderInputField("name")}
         {renderStringListField("aliases")}
         {renderInputField("description", "textarea")}
+        {renderInputField("color")}
         {renderParentTagsField()}
         {renderSubTagsField()}
         <hr />

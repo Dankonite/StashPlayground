@@ -213,7 +213,9 @@ export const EditTagsDialog: React.FC<IListOperationProps> = (
           tagIDs={parentTagIDs}
           setTagIDs={setParentTagIDs}
         />
-
+        {renderTextField("color", updateInput.color, (v) => 
+          setUpdateField({ color: v })
+          )}
         <Tags
           isUpdating={isUpdating}
           controlId="sub-tags"
